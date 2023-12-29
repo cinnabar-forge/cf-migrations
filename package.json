@@ -1,0 +1,16 @@
+{
+  "name": "cf-migrations",
+  "private": true,
+  "version": "0.0.0",
+  "author": {
+    "name": "Timur Moziev",
+    "email": "tr@cinnabar.ru"
+  },
+  "scripts": {
+    "test": "mocha migrate.test.js"
+  },
+  "dependencies": {
+    "mocha": "^10.2.0"
+  },
+  "type": "module"
+}

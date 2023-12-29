@@ -1,0 +1,10 @@
+{
+  "cfVersion": 1,
+  "package": "cf-migrations",
+  "name": "Cinnabar Forge Migrations",
+  "major": 0,
+  "minor": 0,
+  "patch": 0,
+  "revision": 0,
+  "timestamp": 0
+}
