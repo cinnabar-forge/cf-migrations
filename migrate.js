@@ -41,9 +41,9 @@ function addSql(query, args) {
   }
 }
 
-function getColumnQueryPart(column) {
+function getColumnQueryPart(columnName, column) {
   const columnQuery = [];
-  columnQuery.push(`"${column.name}"`);
+  columnQuery.push(`"${columnName}"`);
   columnQuery.push(column.type.toUpperCase());
   if (column.primaryKey) {
     columnQuery.push("PRIMARY KEY");
@@ -73,7 +73,7 @@ function getTableCreationSqlQuery(name, columns) {
       uniques.push(`"${columnName}"`);
     }
 
-    columnsQuery.push(getColumnQueryPart(column));
+    columnsQuery.push(getColumnQueryPart(columnName, column));
   }
 
   if (primaryKeys.length > 0) {
@@ -105,19 +105,20 @@ function createTable(name, columns) {
   currentMigration.queries.push(getTableCreationSqlQuery(name, columns));
 }
 
-function addTableColumn(tableName, column) {
+function addTableColumn(tableName, columnName, column) {
   const currentMigration = migrations[migrations.length - 1];
-  const currentColumn = tables[tableName][column.name];
+  const currentColumn = tables[tableName][columnName];
 
   let query = `ALTER TABLE "${tableName}" ADD COLUMN ${getColumnQueryPart(
+    columnName,
     column
   )};`;
   currentMigration.queries.push(query);
 }
 
-function changeTableColumn(tableName, column) {
+function changeTableColumn(tableName, columnName, column) {
   const currentMigration = migrations[migrations.length - 1];
-  const currentColumn = tables[tableName][column.name];
+  const currentColumn = tables[tableName][columnName];
 
   currentMigration.queries.push(
     getTableCreationSqlQuery(tableName, tables[tableName])

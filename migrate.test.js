@@ -4,12 +4,12 @@ import assert from "assert";
 function createBaseMigration() {
   cfMigrations.resetContext();
   cfMigrations.createMigration();
-  cfMigrations.createTable("species", [
-    { name: "id", id: true },
-    { name: "name", type: "text", notNull: true },
-    { name: "origin", type: "text" },
-    { name: "population", type: "integer" },
-  ]);
+  cfMigrations.createTable("species", {
+    id: { id: true },
+    name: { type: "text", notNull: true },
+    origin: { type: "text" },
+    population: { type: "integer" },
+  });
 }
 
 describe("Empty run", function () {
@@ -74,7 +74,7 @@ describe("Creating new column", function () {
   });
   it("should add a column", function () {
     cfMigrations.createMigration();
-    cfMigrations.addTableColumn("species", { language: { type: "text" } });
+    cfMigrations.addTableColumn("species", "language", { type: "text" });
   });
   it("should return correct SQL query", function () {
     const query = cfMigrations.getMigrationsSqlBundle({});
