@@ -1,10 +1,10 @@
 {
-  "name": "cf-migrations",
-  "private": true,
+  "name": "@cinnabar-forge/cf-migrations",
   "version": "0.0.0",
   "author": {
     "name": "Timur Moziev",
-    "email": "tr@cinnabar.ru"
+    "email": "timur@moziev.ru",
+    "url": "https://moziev.ru"
   },
   "scripts": {
     "test": "mocha migrate.test.js"
