@@ -6,6 +6,7 @@
     "email": "timur@moziev.ru",
     "url": "https://moziev.ru"
   },
+  "main": "migrate.js",
   "scripts": {
     "test": "mocha migrate.test.js"
   },
