@@ -118,11 +118,23 @@ function addTableColumn(tableName, columnName, column) {
 
 function changeTableColumn(tableName, columnName, column) {
   const currentMigration = migrations[migrations.length - 1];
-  const currentColumn = tables[tableName][columnName];
+  const tempTableName = tableName + "_tmp";
+  const queries = [];
 
-  currentMigration.queries.push(
-    getTableCreationSqlQuery(tableName, tables[tableName])
+  tables[tableName][columnName] = column;
+
+  queries.push(getTableCreationSqlQuery(tempTableName, tables[tableName]));
+
+  const recreatedColumns = Object.keys(tables[tableName]).join(", ");
+
+  queries.push(
+    `INSERT INTO ${tempTableName} (${recreatedColumns}) SELECT ${recreatedColumns} FROM ${tableName};`
   );
+
+  queries.push(`DROP TABLE "${tableName}";`);
+  queries.push(`ALTER TABLE "${tempTableName}" RENAME TO "${tableName}";`);
+
+  currentMigration.queries.push(queries.join("\n"));
 }
 
 function getMigrationRevisionSqlQuery() {

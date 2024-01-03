@@ -91,3 +91,33 @@ VACUUM;`
     assert.equal(query.args.length, 6);
   });
 });
+
+describe("Changing existing column type", function () {
+  it("should create a table with a column", function () {
+    createBaseMigration();
+  });
+  it("should change type of the column", function () {
+    cfMigrations.createMigration();
+    cfMigrations.changeTableColumn("species", "origin", {
+      type: "integer",
+      notNull: true,
+    });
+  });
+  it("should return correct SQL query", function () {
+    const query = cfMigrations.getMigrationsSqlBundle({});
+    assert.equal(
+      query.query,
+      `BEGIN TRANSACTION;
+INSERT INTO migrations (revision, app_version, date_migrated) VALUES (?, ?, ?);
+CREATE TABLE "species" ("id" INTEGER PRIMARY KEY AUTOINCREMENT, "name" TEXT NOT NULL, "origin" TEXT, "population" INTEGER);
+INSERT INTO migrations (revision, app_version, date_migrated) VALUES (?, ?, ?);
+CREATE TABLE "species_tmp" ("id" INTEGER, "name" TEXT, "origin" INTEGER NOT NULL, "population" INTEGER);
+INSERT INTO species_tmp (id, name, origin, population) SELECT id, name, origin, population FROM species;
+DROP TABLE "species";
+ALTER TABLE "species_tmp" RENAME TO "species";
+COMMIT TRANSACTION;
+VACUUM;`
+    );
+    assert.equal(query.args.length, 6);
+  });
+});
