@@ -1,6 +1,6 @@
 {
   "cfVersion": 1,
-  "package": "cf-migrations",
+  "package": "@cinnabar-forge/cf-migrations",
   "name": "Cinnabar Forge Migrations",
   "major": 0,
   "minor": 0,
