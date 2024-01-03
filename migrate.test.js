@@ -51,7 +51,7 @@ VACUUM;`
 });
 
 describe("Creating new table", function () {
-  it("should create a table", function () {
+  it("should create a table 'species'", function () {
     createBaseMigration();
   });
   it("should return correct SQL query", function () {
@@ -69,10 +69,10 @@ VACUUM;`
 });
 
 describe("Creating new column", function () {
-  it("should create a table", function () {
+  it("should create a table 'species'", function () {
     createBaseMigration();
   });
-  it("should add a column", function () {
+  it("should add a column 'language' with type 'text'", function () {
     cfMigrations.createMigration();
     cfMigrations.addTableColumn("species", "language", { type: "text" });
   });
@@ -93,10 +93,10 @@ VACUUM;`
 });
 
 describe("Changing existing column type", function () {
-  it("should create a table with a column", function () {
+  it("should create a table 'species'", function () {
     createBaseMigration();
   });
-  it("should change type of the column", function () {
+  it("should change type of the column 'origin' from text to 'integer' and make it not-null", function () {
     cfMigrations.createMigration();
     cfMigrations.changeTableColumn("species", "origin", {
       type: "integer",
@@ -115,6 +115,30 @@ CREATE TABLE "species_tmp" ("id" INTEGER, "name" TEXT, "origin" INTEGER NOT NULL
 INSERT INTO species_tmp (id, name, origin, population) SELECT id, name, origin, population FROM species;
 DROP TABLE "species";
 ALTER TABLE "species_tmp" RENAME TO "species";
+COMMIT TRANSACTION;
+VACUUM;`
+    );
+    assert.equal(query.args.length, 6);
+  });
+});
+
+describe("Renaming existing column", function () {
+  it("should create a table 'species'", function () {
+    createBaseMigration();
+  });
+  it("should change name of the column 'origin' to 'place_of_origin'", function () {
+    cfMigrations.createMigration();
+    cfMigrations.renameTableColumn("species", "origin", "place_of_origin");
+  });
+  it("should return correct SQL query", function () {
+    const query = cfMigrations.getMigrationsSqlBundle({});
+    assert.equal(
+      query.query,
+      `BEGIN TRANSACTION;
+INSERT INTO migrations (revision, app_version, date_migrated) VALUES (?, ?, ?);
+CREATE TABLE "species" ("id" INTEGER PRIMARY KEY AUTOINCREMENT, "name" TEXT NOT NULL, "origin" TEXT, "population" INTEGER);
+INSERT INTO migrations (revision, app_version, date_migrated) VALUES (?, ?, ?);
+ALTER TABLE "species" RENAME COLUMN "origin" TO "place_of_origin";
 COMMIT TRANSACTION;
 VACUUM;`
     );

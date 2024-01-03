@@ -116,6 +116,13 @@ function addTableColumn(tableName, columnName, column) {
   currentMigration.queries.push(query);
 }
 
+function renameTableColumn(tableName, columnName, newColumnName) {
+  const currentMigration = migrations[migrations.length - 1];
+
+  const query = `ALTER TABLE "${tableName}" RENAME COLUMN "${columnName}" TO "${newColumnName}";`;
+  currentMigration.queries.push(query);
+}
+
 function changeTableColumn(tableName, columnName, column) {
   const currentMigration = migrations[migrations.length - 1];
   const tempTableName = tableName + "_tmp";
@@ -193,6 +200,7 @@ export default {
   addSql,
   createTable,
   addTableColumn,
+  renameTableColumn,
   changeTableColumn,
   getMigrationRevisionSqlQuery,
   getMigrationsSqlBundle,
