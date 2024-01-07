@@ -7,6 +7,12 @@
     "url": "https://moziev.ru"
   },
   "main": "migrate.js",
+  "types": "migrate.d.ts",
+  "files": [
+    "migrate.js",
+    "migrate.d.ts",
+    "version.json"
+  ],
   "scripts": {
     "test": "mocha migrate.test.js"
   },

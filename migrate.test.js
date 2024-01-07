@@ -1,10 +1,12 @@
 import cfMigrations from "./migrate.js";
 import assert from "assert";
 
+const migrations = cfMigrations();
+
 function createBaseMigration() {
-  cfMigrations.resetContext();
-  cfMigrations.createMigration();
-  cfMigrations.createTable("species", {
+  migrations.resetContext();
+  migrations.createMigration();
+  migrations.createTable("species", {
     id: { id: true },
     name: { type: "text", notNull: true },
     origin: { type: "text" },
@@ -12,41 +14,39 @@ function createBaseMigration() {
   });
 }
 
-describe("Empty run", function () {
-  it("should return correct SQL query", function () {
-    assert.equal(
-      cfMigrations.getMigrationRevisionSqlQuery(),
-      "CREATE TABLE IF NOT EXISTS migrations (revision INTEGER NOT NULL PRIMARY KEY, app_version TEXT NOT NULL, date_migrated INTEGER NOT NULL); SELECT MAX(revision) as latest_revision, app_version, date_migrated FROM migrations;"
+describe("Static functions", function () {
+  it("should return expected getMigrationTableSqlCreateQuery string", function () {
+    assert.strictEqual(
+      migrations.getMigrationTableSqlCreateQuery(),
+      `CREATE TABLE IF NOT EXISTS "migrations" ("revision" INTEGER NOT NULL PRIMARY KEY, "app_version" TEXT NOT NULL, "date_migrated" INTEGER NOT NULL);`
+    );
+  });
+  it("should return expected getMigrationRevisionSqlSelectQuery string", function () {
+    assert.strictEqual(
+      migrations.getMigrationRevisionSqlSelectQuery(),
+      `SELECT MAX(revision) as "latest_revision", "app_version", "date_migrated" FROM "migrations";`
     );
   });
   it("should return correct SQL query", function () {
-    const query = cfMigrations.getMigrationsSqlBundle({});
-    assert.equal(
-      query.query,
-      `BEGIN TRANSACTION;
-COMMIT TRANSACTION;
-VACUUM;`
-    );
-    assert.equal(query.args.length, 0);
+    const queries = migrations.getMigrationsSqlQueries({});
+    assert.strictEqual(queries[0].query, "BEGIN TRANSACTION;");
+    assert.strictEqual(queries[1].query, "COMMIT TRANSACTION;");
+    assert.strictEqual(queries[2].query, "VACUUM;");
   });
 });
 
 describe("Adding SQL", function () {
   it("should add a SQL query", function () {
-    cfMigrations.createMigration();
-    cfMigrations.addSql("VACUUM;", ["testPurposes"]);
+    migrations.createMigration();
+    migrations.addSql("VACUUM;", ["testPurposes"]);
   });
   it("should return correct SQL query", function () {
-    const query = cfMigrations.getMigrationsSqlBundle({});
-    assert.equal(
-      query.query,
-      `BEGIN TRANSACTION;
-INSERT INTO migrations (revision, app_version, date_migrated) VALUES (?, ?, ?);
-VACUUM;
-COMMIT TRANSACTION;
-VACUUM;`
-    );
-    assert.equal(query.args.length, 4);
+    const queries = migrations.getMigrationsSqlQueries({});
+    assert.strictEqual(queries[0].query, "BEGIN TRANSACTION;");
+    assert.strictEqual(queries[1].query, `INSERT INTO "migrations" (revision, app_version, date_migrated) VALUES (?, ?, ?);`);
+    assert.strictEqual(queries[2].query, "VACUUM;");
+    assert.strictEqual(queries[3].query, "COMMIT TRANSACTION;");
+    assert.strictEqual(queries[4].query, "VACUUM;");
   });
 });
 
@@ -55,16 +55,13 @@ describe("Creating new table", function () {
     createBaseMigration();
   });
   it("should return correct SQL query", function () {
-    const query = cfMigrations.getMigrationsSqlBundle({});
-    assert.equal(
-      query.query,
-      `BEGIN TRANSACTION;
-INSERT INTO migrations (revision, app_version, date_migrated) VALUES (?, ?, ?);
-CREATE TABLE "species" ("id" INTEGER PRIMARY KEY AUTOINCREMENT, "name" TEXT NOT NULL, "origin" TEXT, "population" INTEGER);
-COMMIT TRANSACTION;
-VACUUM;`
-    );
-    assert.equal(query.args.length, 3);
+    const queries = migrations.getMigrationsSqlQueries({});
+    assert.strictEqual(queries[0].query, "BEGIN TRANSACTION;");
+    assert.strictEqual(queries[1].query, `INSERT INTO "migrations" (revision, app_version, date_migrated) VALUES (?, ?, ?);`);
+    assert.strictEqual(queries[1].args.length, 3);
+    assert.strictEqual(queries[2].query, `CREATE TABLE "species" ("id" INTEGER PRIMARY KEY AUTOINCREMENT, "name" TEXT NOT NULL, "origin" TEXT, "population" INTEGER);`);
+    assert.strictEqual(queries[3].query, "COMMIT TRANSACTION;");
+    assert.strictEqual(queries[4].query, "VACUUM;");
   });
 });
 
@@ -73,22 +70,20 @@ describe("Creating new column", function () {
     createBaseMigration();
   });
   it("should add a column 'language' with type 'text'", function () {
-    cfMigrations.createMigration();
-    cfMigrations.addTableColumn("species", "language", { type: "text" });
+    migrations.createMigration();
+    migrations.addTableColumn("species", "language", { type: "text" });
   });
   it("should return correct SQL query", function () {
-    const query = cfMigrations.getMigrationsSqlBundle({});
-    assert.equal(
-      query.query,
-      `BEGIN TRANSACTION;
-INSERT INTO migrations (revision, app_version, date_migrated) VALUES (?, ?, ?);
-CREATE TABLE "species" ("id" INTEGER PRIMARY KEY AUTOINCREMENT, "name" TEXT NOT NULL, "origin" TEXT, "population" INTEGER);
-INSERT INTO migrations (revision, app_version, date_migrated) VALUES (?, ?, ?);
-ALTER TABLE "species" ADD COLUMN "language" TEXT;
-COMMIT TRANSACTION;
-VACUUM;`
-    );
-    assert.equal(query.args.length, 6);
+    const queries = migrations.getMigrationsSqlQueries({});
+    assert.strictEqual(queries[0].query, "BEGIN TRANSACTION;");
+    assert.strictEqual(queries[1].query, `INSERT INTO "migrations" (revision, app_version, date_migrated) VALUES (?, ?, ?);`);
+    assert.strictEqual(queries[1].args.length, 3);
+    assert.strictEqual(queries[2].query, `CREATE TABLE "species" ("id" INTEGER PRIMARY KEY AUTOINCREMENT, "name" TEXT NOT NULL, "origin" TEXT, "population" INTEGER);`);
+    assert.strictEqual(queries[3].query, `INSERT INTO "migrations" (revision, app_version, date_migrated) VALUES (?, ?, ?);`);
+    assert.strictEqual(queries[3].args.length, 3);
+    assert.strictEqual(queries[4].query, `ALTER TABLE "species" ADD COLUMN "language" TEXT;`);
+    assert.strictEqual(queries[5].query, "COMMIT TRANSACTION;");
+    assert.strictEqual(queries[6].query, "VACUUM;");
   });
 });
 
@@ -97,28 +92,26 @@ describe("Changing existing column type", function () {
     createBaseMigration();
   });
   it("should change type of the column 'origin' from text to 'integer' and make it not-null", function () {
-    cfMigrations.createMigration();
-    cfMigrations.changeTableColumn("species", "origin", {
+    migrations.createMigration();
+    migrations.changeTableColumn("species", "origin", {
       type: "integer",
       notNull: true,
     });
   });
   it("should return correct SQL query", function () {
-    const query = cfMigrations.getMigrationsSqlBundle({});
-    assert.equal(
-      query.query,
-      `BEGIN TRANSACTION;
-INSERT INTO migrations (revision, app_version, date_migrated) VALUES (?, ?, ?);
-CREATE TABLE "species" ("id" INTEGER PRIMARY KEY AUTOINCREMENT, "name" TEXT NOT NULL, "origin" TEXT, "population" INTEGER);
-INSERT INTO migrations (revision, app_version, date_migrated) VALUES (?, ?, ?);
-CREATE TABLE "species_tmp" ("id" INTEGER, "name" TEXT, "origin" INTEGER NOT NULL, "population" INTEGER);
-INSERT INTO species_tmp (id, name, origin, population) SELECT id, name, origin, population FROM species;
-DROP TABLE "species";
-ALTER TABLE "species_tmp" RENAME TO "species";
-COMMIT TRANSACTION;
-VACUUM;`
-    );
-    assert.equal(query.args.length, 6);
+    const queries = migrations.getMigrationsSqlQueries({});
+    assert.strictEqual(queries[0].query, "BEGIN TRANSACTION;");
+    assert.strictEqual(queries[1].query, `INSERT INTO "migrations" (revision, app_version, date_migrated) VALUES (?, ?, ?);`);
+    assert.strictEqual(queries[1].args.length, 3);
+    assert.strictEqual(queries[2].query, `CREATE TABLE "species" ("id" INTEGER PRIMARY KEY AUTOINCREMENT, "name" TEXT NOT NULL, "origin" TEXT, "population" INTEGER);`);
+    assert.strictEqual(queries[3].query, `INSERT INTO "migrations" (revision, app_version, date_migrated) VALUES (?, ?, ?);`);
+    assert.strictEqual(queries[3].args.length, 3);
+    assert.strictEqual(queries[4].query, `CREATE TABLE "species_tmp" ("id" INTEGER, "name" TEXT, "origin" INTEGER NOT NULL, "population" INTEGER);`);
+    assert.strictEqual(queries[5].query, `INSERT INTO species_tmp (id, name, origin, population) SELECT id, name, origin, population FROM species;`);
+    assert.strictEqual(queries[6].query, `DROP TABLE "species";`);
+    assert.strictEqual(queries[7].query, `ALTER TABLE "species_tmp" RENAME TO "species";`);
+    assert.strictEqual(queries[8].query, "COMMIT TRANSACTION;");
+    assert.strictEqual(queries[9].query, "VACUUM;");
   });
 });
 
@@ -127,21 +120,19 @@ describe("Renaming existing column", function () {
     createBaseMigration();
   });
   it("should change name of the column 'origin' to 'place_of_origin'", function () {
-    cfMigrations.createMigration();
-    cfMigrations.renameTableColumn("species", "origin", "place_of_origin");
+    migrations.createMigration();
+    migrations.renameTableColumn("species", "origin", "place_of_origin");
   });
   it("should return correct SQL query", function () {
-    const query = cfMigrations.getMigrationsSqlBundle({});
-    assert.equal(
-      query.query,
-      `BEGIN TRANSACTION;
-INSERT INTO migrations (revision, app_version, date_migrated) VALUES (?, ?, ?);
-CREATE TABLE "species" ("id" INTEGER PRIMARY KEY AUTOINCREMENT, "name" TEXT NOT NULL, "origin" TEXT, "population" INTEGER);
-INSERT INTO migrations (revision, app_version, date_migrated) VALUES (?, ?, ?);
-ALTER TABLE "species" RENAME COLUMN "origin" TO "place_of_origin";
-COMMIT TRANSACTION;
-VACUUM;`
-    );
-    assert.equal(query.args.length, 6);
+    const queries = migrations.getMigrationsSqlQueries({});
+    assert.strictEqual(queries[0].query, "BEGIN TRANSACTION;");
+    assert.strictEqual(queries[1].query, `INSERT INTO "migrations" (revision, app_version, date_migrated) VALUES (?, ?, ?);`);
+    assert.strictEqual(queries[1].args.length, 3);
+    assert.strictEqual(queries[2].query, `CREATE TABLE "species" ("id" INTEGER PRIMARY KEY AUTOINCREMENT, "name" TEXT NOT NULL, "origin" TEXT, "population" INTEGER);`);
+    assert.strictEqual(queries[3].query, `INSERT INTO "migrations" (revision, app_version, date_migrated) VALUES (?, ?, ?);`);
+    assert.strictEqual(queries[3].args.length, 3);
+    assert.strictEqual(queries[4].query, `ALTER TABLE "species" RENAME COLUMN "origin" TO "place_of_origin";`);
+    assert.strictEqual(queries[5].query, "COMMIT TRANSACTION;");
+    assert.strictEqual(queries[6].query, "VACUUM;");
   });
 });

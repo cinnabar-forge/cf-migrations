@@ -21,24 +21,21 @@ function setSqlDialect(value) {
 }
 
 function createMigration() {
-  migrations.push({
-    queries: [
-      `INSERT INTO migrations (revision, app_version, date_migrated) VALUES (?, ?, ?);`,
-    ],
-    args: [
-      migrations.length,
-      process.env.npm_package_version,
-      Math.round(Date.now() / 1000),
-    ],
-  });
+  migrations.push([
+    {
+      query: `INSERT INTO "migrations" (revision, app_version, date_migrated) VALUES (?, ?, ?);`,
+      args: [
+        migrations.length,
+        process.env.npm_package_version,
+        Math.round(Date.now() / 1000),
+      ],
+    },
+  ]);
 }
 
 function addSql(query, args) {
   const currentMigration = migrations[migrations.length - 1];
-  currentMigration.queries.push(query);
-  if (args) {
-    currentMigration.args.push(...args);
-  }
+  currentMigration.push({ query, args });
 }
 
 function getColumnQueryPart(columnName, column) {
@@ -88,8 +85,6 @@ function getTableCreationSqlQuery(name, columns) {
 }
 
 function createTable(name, columns) {
-  const currentMigration = migrations[migrations.length - 1];
-
   tables[name] = {};
 
   for (const [columnName, column] of Object.entries(columns)) {
@@ -102,57 +97,54 @@ function createTable(name, columns) {
     tables[name][columnName] = { type: column.type };
   }
 
-  currentMigration.queries.push(getTableCreationSqlQuery(name, columns));
+  addSql(getTableCreationSqlQuery(name, columns));
 }
 
 function addTableColumn(tableName, columnName, column) {
-  const currentMigration = migrations[migrations.length - 1];
-  const currentColumn = tables[tableName][columnName];
-
-  let query = `ALTER TABLE "${tableName}" ADD COLUMN ${getColumnQueryPart(
+  const query = `ALTER TABLE "${tableName}" ADD COLUMN ${getColumnQueryPart(
     columnName,
     column
   )};`;
-  currentMigration.queries.push(query);
+  addSql(query);
 }
 
 function renameTableColumn(tableName, columnName, newColumnName) {
-  const currentMigration = migrations[migrations.length - 1];
-
   const query = `ALTER TABLE "${tableName}" RENAME COLUMN "${columnName}" TO "${newColumnName}";`;
-  currentMigration.queries.push(query);
+  addSql(query);
 }
 
 function changeTableColumn(tableName, columnName, column) {
   const currentMigration = migrations[migrations.length - 1];
   const tempTableName = tableName + "_tmp";
-  const queries = [];
 
   tables[tableName][columnName] = column;
 
-  queries.push(getTableCreationSqlQuery(tempTableName, tables[tableName]));
+  addSql(getTableCreationSqlQuery(tempTableName, tables[tableName]));
 
   const recreatedColumns = Object.keys(tables[tableName]).join(", ");
 
-  queries.push(
+  addSql(
     `INSERT INTO ${tempTableName} (${recreatedColumns}) SELECT ${recreatedColumns} FROM ${tableName};`
   );
 
-  queries.push(`DROP TABLE "${tableName}";`);
-  queries.push(`ALTER TABLE "${tempTableName}" RENAME TO "${tableName}";`);
-
-  currentMigration.queries.push(queries.join("\n"));
+  addSql(`DROP TABLE "${tableName}";`);
+  addSql(`ALTER TABLE "${tempTableName}" RENAME TO "${tableName}";`);
 }
 
-function getMigrationRevisionSqlQuery() {
-  return "CREATE TABLE IF NOT EXISTS migrations (revision INTEGER NOT NULL PRIMARY KEY, app_version TEXT NOT NULL, date_migrated INTEGER NOT NULL); SELECT MAX(revision) as latest_revision, app_version, date_migrated FROM migrations;";
+function getMigrationTableSqlCreateQuery() {
+  return `CREATE TABLE IF NOT EXISTS "migrations" ("revision" INTEGER NOT NULL PRIMARY KEY, "app_version" TEXT NOT NULL, "date_migrated" INTEGER NOT NULL);`;
 }
 
-function getMigrationsSqlBundle(latestMigration) {
+function getMigrationRevisionSqlSelectQuery() {
+  return `SELECT MAX(revision) as "latest_revision", "app_version", "date_migrated" FROM "migrations";`;
+}
+
+function getMigrationsSqlQueries(latestMigration) {
   const queries = [];
-  const args = [];
 
-  queries.push("BEGIN TRANSACTION;");
+  queries.push({ query: "BEGIN TRANSACTION;" });
+
+  console.log(`Generating migration SQL queries...`);
 
   if (latestMigration.latest_revision != null) {
     console.log(
@@ -164,44 +156,41 @@ function getMigrationsSqlBundle(latestMigration) {
     );
   } else {
     latestMigration.latest_revision = 0;
-    console.log(`New database`);
+    console.log(`Migration history is empty`);
   }
 
   if (latestMigration.latest_revision < migrations.length) {
-    console.log(`Migrating to revision ${migrations.length - 1}...`);
+    console.log(`Target migration: ${migrations.length - 1}`);
     for (
       let revision = latestMigration.latest_revision;
       revision < migrations.length;
       revision++
     ) {
-      if (revision > 0) {
-        console.log(`...migration from r${revision - 1} to r${revision}...`);
-      }
-
-      queries.push(...migrations[revision].queries);
-      args.push(...migrations[revision].args);
+      queries.push(...migrations[revision]);
     }
-    console.log("...done migrating");
-  } else {
-    console.log(`Database is up-to-date`);
   }
 
-  queries.push("COMMIT TRANSACTION;");
-  queries.push("VACUUM;");
+  queries.push({ query: "COMMIT TRANSACTION;" });
+  queries.push({ query: "VACUUM;" });
 
-  return { query: queries.join("\n"), args };
+  console.log(`...SQL queries have been generated`);
+
+  return queries;
 }
 
-export default {
-  resetContext,
-  getSqlDialect,
-  setSqlDialect,
-  createMigration,
-  addSql,
-  createTable,
-  addTableColumn,
-  renameTableColumn,
-  changeTableColumn,
-  getMigrationRevisionSqlQuery,
-  getMigrationsSqlBundle,
-};
+export default function () {
+  return {
+    resetContext,
+    getSqlDialect,
+    setSqlDialect,
+    createMigration,
+    addSql,
+    createTable,
+    addTableColumn,
+    renameTableColumn,
+    changeTableColumn,
+    getMigrationTableSqlCreateQuery,
+    getMigrationRevisionSqlSelectQuery,
+    getMigrationsSqlQueries,
+  };
+}
