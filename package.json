@@ -16,7 +16,7 @@
   "scripts": {
     "test": "mocha migrate.test.js"
   },
-  "dependencies": {
+  "devDependencies": {
     "mocha": "^10.2.0"
   },
   "type": "module"
