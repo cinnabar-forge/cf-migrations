@@ -1,5 +1,12 @@
 declare module "@cinnabar-forge/cf-migrations" {
-  export type Column = { type?: string; primaryKey?: boolean; autoIncrement?: boolean };
+  export type Column = {
+    type?: "NULL" | "INTEGER" | "REAL" | "TEXT" | "BLOB";
+    id?: boolean;
+    primaryKey?: boolean;
+    autoIncrement?: boolean;
+    notNull?: boolean;
+    unique?: boolean;
+  };
   export type LastMigration = {
     latest_revision: string;
     app_version: string;

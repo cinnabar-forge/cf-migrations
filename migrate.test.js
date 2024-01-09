@@ -8,9 +8,9 @@ function createBaseMigration() {
   migrations.createMigration();
   migrations.createTable("species", {
     id: { id: true },
-    name: { type: "text", notNull: true },
-    origin: { type: "text" },
-    population: { type: "integer" },
+    name: { type: "TEXT", notNull: true },
+    origin: { type: "TEXT" },
+    population: { type: "INTEGER" },
   });
 }
 
@@ -79,9 +79,9 @@ describe("Creating new column", function () {
   it("should create a table 'species'", function () {
     createBaseMigration();
   });
-  it("should add a column 'language' with type 'text'", function () {
+  it("should add a column 'language' with type 'TEXT'", function () {
     migrations.createMigration();
-    migrations.addTableColumn("species", "language", { type: "text" });
+    migrations.addTableColumn("species", "language", { type: "TEXT" });
   });
   it("should return correct SQL query", function () {
     const queries = migrations.getMigrationsSqlQueries({});
@@ -113,10 +113,10 @@ describe("Changing existing column type", function () {
   it("should create a table 'species'", function () {
     createBaseMigration();
   });
-  it("should change type of the column 'origin' from text to 'integer' and make it not-null", function () {
+  it("should change type of the column 'origin' from 'TEXT' to 'INTEGER' and make it not-null", function () {
     migrations.createMigration();
     migrations.changeTableColumn("species", "origin", {
-      type: "integer",
+      type: "INTEGER",
       notNull: true,
     });
   });
