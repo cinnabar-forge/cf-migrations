@@ -7,7 +7,7 @@ declare module "@cinnabar-forge/cf-migrations" {
   };
   export type Query = { query: string; args: any[] };
 
-  export default function (): {
+  export default function (_versionColumnName?: string): {
     resetContext: () => void;
     getSqlDialect: () => string;
     setSqlDialect: (value: string) => void;

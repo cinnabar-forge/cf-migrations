@@ -1,5 +1,7 @@
 let dialect;
 
+let versionColumnName;
+
 const migrations = [];
 
 const tables = {};
@@ -23,7 +25,7 @@ function setSqlDialect(value) {
 function createMigration() {
   migrations.push([
     {
-      query: `INSERT INTO "migrations" (revision, app_version, date_migrated) VALUES (?, ?, ?);`,
+      query: `INSERT INTO "migrations" (revision, ${versionColumnName}, date_migrated) VALUES (?, ?, ?);`,
       args: [
         migrations.length,
         process.env.npm_package_version,
@@ -132,11 +134,11 @@ function changeTableColumn(tableName, columnName, column) {
 }
 
 function getMigrationTableSqlCreateQuery() {
-  return `CREATE TABLE IF NOT EXISTS "migrations" ("revision" INTEGER NOT NULL PRIMARY KEY, "app_version" TEXT NOT NULL, "date_migrated" INTEGER NOT NULL);`;
+  return `CREATE TABLE IF NOT EXISTS "migrations" ("revision" INTEGER NOT NULL PRIMARY KEY, "${versionColumnName}" TEXT NOT NULL, "date_migrated" INTEGER NOT NULL);`;
 }
 
 function getMigrationRevisionSqlSelectQuery() {
-  return `SELECT MAX(revision) as "latest_revision", "app_version", "date_migrated" FROM "migrations";`;
+  return `SELECT MAX(revision) as "latest_revision", "${versionColumnName}", "date_migrated" FROM "migrations";`;
 }
 
 function getMigrationsSqlQueries(latestMigration) {
@@ -151,7 +153,7 @@ function getMigrationsSqlQueries(latestMigration) {
       `Last database migration: ${new Date(
         latestMigration.date_migrated * 1000
       ).toISOString()} (r${latestMigration.latest_revision}, v${
-        latestMigration.app_version
+        latestMigration[versionColumnName]
       })`
     );
   } else {
@@ -178,9 +180,10 @@ function getMigrationsSqlQueries(latestMigration) {
   return queries;
 }
 
-export default function () {
+export default function (_versionColumnName) {
+  resetContext();
+  versionColumnName = _versionColumnName ?? "app_version";
   return {
-    resetContext,
     getSqlDialect,
     setSqlDialect,
     createMigration,
