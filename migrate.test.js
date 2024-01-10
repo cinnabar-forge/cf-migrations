@@ -27,11 +27,9 @@ describe("Static functions", function () {
       `SELECT MAX(revision) as "latest_revision", "app_version", "date_migrated" FROM "migrations";`
     );
   });
-  it("should return correct SQL query", function () {
+  it("should return zero queries", function () {
     const queries = migrations.getMigrationsSqlQueries({});
-    assert.strictEqual(queries[0].query, "BEGIN TRANSACTION;");
-    assert.strictEqual(queries[1].query, "COMMIT TRANSACTION;");
-    assert.strictEqual(queries[2].query, "VACUUM;");
+    assert.strictEqual(queries.length, 0);
   });
 });
 
