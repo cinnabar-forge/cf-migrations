@@ -17,8 +17,7 @@ declare module "@cinnabar-forge/cf-migrations" {
     date_migrated: number;
   };
   export type Query = { query: string; args: any[] };
-
-  export default function (_versionColumnName?: string): {
+  export type MigrationBuilder = {
     resetContext: () => void;
     getSqlDialect: () => string;
     setSqlDialect: (value: string) => void;
@@ -49,4 +48,6 @@ declare module "@cinnabar-forge/cf-migrations" {
     getMigrationRevisionSqlSelectQuery: () => string;
     getMigrationsSqlQueries: (latestMigration: LastMigration) => Query[];
   };
+
+  export default function (_versionColumnName?: string): MigrationBuilder;
 }
