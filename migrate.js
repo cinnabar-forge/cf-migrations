@@ -2,6 +2,8 @@ let dialect;
 
 let versionColumnName;
 
+const EMPTY_OBJECT = {};
+
 const migrations = [];
 
 const tables = {};
@@ -53,6 +55,9 @@ function getColumnQueryPart(columnName, column) {
   if (column.notNull) {
     columnQuery.push("NOT NULL");
   }
+  if (column.default != null) {
+    columnQuery.push(`DEFAULT ${wrapValue(column.default)}`);
+  }
 
   return columnQuery.join(" ");
 }
@@ -87,50 +92,90 @@ function getTableCreationSqlQuery(name, columns) {
 }
 
 function createTable(name, columns) {
-  tables[name] = {};
+  tables[name] = {
+    columns: {},
+    primaryKeys: {},
+    params: {},
+  };
 
   for (const [columnName, column] of Object.entries(columns)) {
     if (column.id) {
-      column.type = "integer";
+      column.type = "INTEGER";
       column.primaryKey = true;
       column.autoIncrement = true;
     }
 
-    tables[name][columnName] = { type: column.type };
+    tables[name].columns[columnName] = { type: column.type };
   }
 
   addSql(getTableCreationSqlQuery(name, columns));
 }
 
-function addTableColumn(tableName, columnName, column) {
-  const query = `ALTER TABLE "${tableName}" ADD COLUMN ${getColumnQueryPart(
+function recreateTable(tableName, columns) {
+  if (columns == null) {
+    console.log("hehe");
+    columns = tables[tableName].columns;
+  }
+
+  const tempTableName = tableName + "_tmp";
+
+  addSql(getTableCreationSqlQuery(tempTableName, columns));
+
+  const recreatedColumnCurrent = [];
+  const recreatedColumnPrevious = [];
+
+  for (const columnName of Object.keys(columns)) {
+    const params = tables[tableName].params[columnName] ?? EMPTY_OBJECT;
+
+    recreatedColumnCurrent.push(columnName);
+
+    const previous = params.fillFrom ?? columnName;
+
+    recreatedColumnPrevious.push(
+      params.coalesce
+        ? `COALESCE("${previous}", ${wrapValue(params.coalesce)})`
+        : previous
+    );
+  }
+
+  addSql(
+    `INSERT INTO ${tempTableName} (${recreatedColumnCurrent.join(
+      ", "
+    )}) SELECT ${recreatedColumnPrevious.join(", ")} FROM ${tableName};`
+  );
+
+  addSql(`DROP TABLE "${tableName}";`);
+  addSql(`ALTER TABLE "${tempTableName}" RENAME TO "${tableName}";`);
+}
+
+function addTableColumn(tableName, columnName, column, params) {
+  tables[tableName].columns[columnName] = column;
+  if (params != null) {
+    tables[tableName].params[columnName] = params;
+  }
+
+  const alterQuery = `ALTER TABLE "${tableName}" ADD COLUMN ${getColumnQueryPart(
     columnName,
     column
   )};`;
-  addSql(query);
+  addSql(alterQuery);
 }
 
 function renameTableColumn(tableName, columnName, newColumnName) {
+  tables[tableName].columns[newColumnName] =
+    tables[tableName].columns[columnName];
+  delete tables[tableName].columns[columnName];
+
   const query = `ALTER TABLE "${tableName}" RENAME COLUMN "${columnName}" TO "${newColumnName}";`;
   addSql(query);
 }
 
 function changeTableColumn(tableName, columnName, column) {
-  const currentMigration = migrations[migrations.length - 1];
-  const tempTableName = tableName + "_tmp";
+  tables[tableName].columns[columnName] = column;
+}
 
-  tables[tableName][columnName] = column;
-
-  addSql(getTableCreationSqlQuery(tempTableName, tables[tableName]));
-
-  const recreatedColumns = Object.keys(tables[tableName]).join(", ");
-
-  addSql(
-    `INSERT INTO ${tempTableName} (${recreatedColumns}) SELECT ${recreatedColumns} FROM ${tableName};`
-  );
-
-  addSql(`DROP TABLE "${tableName}";`);
-  addSql(`ALTER TABLE "${tempTableName}" RENAME TO "${tableName}";`);
+function deleteTableColumn(tableName, columnName) {
+  delete tables[tableName].columns[columnName];
 }
 
 function getMigrationTableSqlCreateQuery() {
@@ -157,18 +202,20 @@ function getMigrationsSqlQueries(latestMigration) {
       })`
     );
   } else {
-    latestMigration.latest_revision = 0;
+    latestMigration.latest_revision = -1;
     console.log(`Migration history is empty`);
   }
 
   if (latestMigration.latest_revision < migrations.length) {
-    console.log(`Target migration: ${migrations.length - 1}`);
+    console.log(`Target migration revision ID: ${migrations.length - 1}`);
     for (
-      let revision = latestMigration.latest_revision;
+      let revision = latestMigration.latest_revision + 1;
       revision < migrations.length;
       revision++
     ) {
-      queries.push(...migrations[revision]);
+      if (migrations[revision] != null) {
+        queries.push(...migrations[revision]);
+      }
     }
   }
 
@@ -180,6 +227,10 @@ function getMigrationsSqlQueries(latestMigration) {
   return queries;
 }
 
+function wrapValue(value) {
+  return typeof value === "string" ? `'${value}'` : value;
+}
+
 export default function (_versionColumnName) {
   resetContext();
   versionColumnName = _versionColumnName ?? "app_version";
@@ -189,9 +240,11 @@ export default function (_versionColumnName) {
     createMigration,
     addSql,
     createTable,
+    recreateTable,
     addTableColumn,
     renameTableColumn,
     changeTableColumn,
+    deleteTableColumn,
     getMigrationTableSqlCreateQuery,
     getMigrationRevisionSqlSelectQuery,
     getMigrationsSqlQueries,

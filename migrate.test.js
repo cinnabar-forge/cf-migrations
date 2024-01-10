@@ -113,12 +113,14 @@ describe("Changing existing column type", function () {
   it("should create a table 'species'", function () {
     createBaseMigration();
   });
-  it("should change type of the column 'origin' from 'TEXT' to 'INTEGER' and make it not-null", function () {
+  it("should change type of the column 'origin' from 'TEXT' to 'INTEGER', make it not-null, and default to 'Earth'", function () {
     migrations.createMigration();
     migrations.changeTableColumn("species", "origin", {
       type: "INTEGER",
       notNull: true,
+      default: "Earth"
     });
+    migrations.recreateTable("species");
   });
   it("should return correct SQL query", function () {
     const queries = migrations.getMigrationsSqlQueries({});
@@ -139,7 +141,7 @@ describe("Changing existing column type", function () {
     assert.strictEqual(queries[3].args.length, 3);
     assert.strictEqual(
       queries[4].query,
-      `CREATE TABLE "species_tmp" ("id" INTEGER, "name" TEXT, "origin" INTEGER NOT NULL, "population" INTEGER);`
+      `CREATE TABLE "species_tmp" ("id" INTEGER, "name" TEXT, "origin" INTEGER NOT NULL DEFAULT 'Earth', "population" INTEGER);`
     );
     assert.strictEqual(
       queries[5].query,
@@ -186,5 +188,102 @@ describe("Renaming existing column", function () {
     );
     assert.strictEqual(queries[5].query, "COMMIT TRANSACTION;");
     assert.strictEqual(queries[6].query, "VACUUM;");
+  });
+});
+
+describe("Add column with 'fillFrom' and 'coalesce' params", function () {
+  it("should create a table 'species'", function () {
+    createBaseMigration();
+  });
+  it("should add column 'residence' and fill it with data from 'origin'", function () {
+    migrations.createMigration();
+    migrations.addTableColumn(
+      "species",
+      "residence",
+      { type: "TEXT" },
+      { fillFrom: "origin", coalesce: "New Earth" }
+    );
+    migrations.recreateTable("species");
+  });
+  it("should return correct SQL query", function () {
+    const queries = migrations.getMigrationsSqlQueries({});
+    assert.strictEqual(queries[0].query, "BEGIN TRANSACTION;");
+    assert.strictEqual(
+      queries[1].query,
+      `INSERT INTO "migrations" (revision, dw_version, date_migrated) VALUES (?, ?, ?);`
+    );
+    assert.strictEqual(queries[1].args.length, 3);
+    assert.strictEqual(
+      queries[2].query,
+      `CREATE TABLE "species" ("id" INTEGER PRIMARY KEY AUTOINCREMENT, "name" TEXT NOT NULL, "origin" TEXT, "population" INTEGER);`
+    );
+    assert.strictEqual(
+      queries[3].query,
+      `INSERT INTO "migrations" (revision, dw_version, date_migrated) VALUES (?, ?, ?);`
+    );
+    assert.strictEqual(queries[3].args.length, 3);
+    assert.strictEqual(
+      queries[4].query,
+      `ALTER TABLE "species" ADD COLUMN "residence" TEXT;`
+    );
+    assert.strictEqual(
+      queries[5].query,
+      `CREATE TABLE "species_tmp" ("id" INTEGER, "name" TEXT, "origin" TEXT, "population" INTEGER, "residence" TEXT);`
+    );
+    assert.strictEqual(
+      queries[6].query,
+      `INSERT INTO species_tmp (id, name, origin, population, residence) SELECT id, name, origin, population, COALESCE("origin", 'New Earth') FROM species;`
+    );
+    assert.strictEqual(queries[7].query, `DROP TABLE "species";`);
+    assert.strictEqual(
+      queries[8].query,
+      `ALTER TABLE "species_tmp" RENAME TO "species";`
+    );
+    assert.strictEqual(queries[9].query, "COMMIT TRANSACTION;");
+    assert.strictEqual(queries[10].query, "VACUUM;");
+  });
+});
+
+describe("Delete column from table", function () {
+  it("should create a table 'species'", function () {
+    createBaseMigration();
+  });
+  it("should delete column 'origin'", function () {
+    migrations.createMigration();
+    migrations.deleteTableColumn("species", "origin");
+    migrations.recreateTable("species");
+  });
+  it("should return correct SQL query", function () {
+    const queries = migrations.getMigrationsSqlQueries({});
+    assert.strictEqual(queries[0].query, "BEGIN TRANSACTION;");
+    assert.strictEqual(
+      queries[1].query,
+      `INSERT INTO "migrations" (revision, dw_version, date_migrated) VALUES (?, ?, ?);`
+    );
+    assert.strictEqual(queries[1].args.length, 3);
+    assert.strictEqual(
+      queries[2].query,
+      `CREATE TABLE "species" ("id" INTEGER PRIMARY KEY AUTOINCREMENT, "name" TEXT NOT NULL, "origin" TEXT, "population" INTEGER);`
+    );
+    assert.strictEqual(
+      queries[3].query,
+      `INSERT INTO "migrations" (revision, dw_version, date_migrated) VALUES (?, ?, ?);`
+    );
+    assert.strictEqual(queries[3].args.length, 3);
+    assert.strictEqual(
+      queries[4].query,
+      `CREATE TABLE "species_tmp" ("id" INTEGER, "name" TEXT, "population" INTEGER);`
+    );
+    assert.strictEqual(
+      queries[5].query,
+      `INSERT INTO species_tmp (id, name, population) SELECT id, name, population FROM species;`
+    );
+    assert.strictEqual(queries[6].query, `DROP TABLE "species";`);
+    assert.strictEqual(
+      queries[7].query,
+      `ALTER TABLE "species_tmp" RENAME TO "species";`
+    );
+    assert.strictEqual(queries[8].query, "COMMIT TRANSACTION;");
+    assert.strictEqual(queries[9].query, "VACUUM;");
   });
 });

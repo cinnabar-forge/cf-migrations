@@ -6,6 +6,11 @@ declare module "@cinnabar-forge/cf-migrations" {
     autoIncrement?: boolean;
     notNull?: boolean;
     unique?: boolean;
+    default?: string;
+  };
+  export type ColumnAdditionParams = {
+    fillFrom?: string;
+    coalesce?: string;
   };
   export type LastMigration = {
     latest_revision: string;
@@ -21,10 +26,12 @@ declare module "@cinnabar-forge/cf-migrations" {
     createMigration: () => void;
     addSql: (query: string, params: any[]) => void;
     createTable: (name: string, columns: Record<string, Column>) => void;
+    recreateTable: (name: string, columns?: Record<string, Column>) => void;
     addTableColumn: (
       tableName: string,
       columnName: string,
-      column: Column
+      column: Column,
+      params?: ColumnAdditionParams
     ) => void;
     renameTableColumn: (
       tableName: string,
@@ -36,6 +43,7 @@ declare module "@cinnabar-forge/cf-migrations" {
       columnName: string,
       column: Column
     ) => void;
+    deleteTableColumn: (tableName: string, columnName: string) => void;
     getMigrationTableSqlCreateQuery: () => string;
     getMigrationRevisionSqlSelectQuery: () => string;
     getMigrationsSqlQueries: (latestMigration: LastMigration) => Query[];
