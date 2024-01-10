@@ -9,7 +9,7 @@ declare module "@cinnabar-forge/cf-migrations" {
   };
   export type ColumnAdditionParams = {
     fillFrom?: string;
-    coalesce?: string;
+    coalesce?: any;
   };
   export type LastMigration = {
     latest_revision: string;

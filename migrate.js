@@ -49,9 +49,9 @@ function getColumnQueryPart(columnName, column) {
     columnQuery.push("INTEGER PRIMARY KEY AUTOINCREMENT");
   } else {
     columnQuery.push(column.type.toUpperCase());
-    if (column.primaryKey) {
-      columnQuery.push("PRIMARY KEY");
-    }
+    // if (column.primaryKey) {
+    //   columnQuery.push("PRIMARY KEY");
+    // }
     if (column.autoIncrement) {
       columnQuery.push("AUTOINCREMENT");
     }
@@ -60,7 +60,7 @@ function getColumnQueryPart(columnName, column) {
     }
     if (column.default != null) {
       columnQuery.push(`DEFAULT ${wrapValue(column.default)}`);
-    } else if (column.notNull) {
+    } else if (column.notNull && !column.unique) {
       throw new Error(
         "'notNull' argument should be used with 'default' argument"
       );
@@ -112,7 +112,7 @@ function createTable(name, columns) {
   addSql(getTableCreationSqlQuery(name, columns));
 }
 
-function recreateTable(tableName, columns) {
+function recreateTable(tableName, columns, fromId) {
   if (columns == null) {
     columns = tables[tableName].columns;
   }
@@ -125,14 +125,19 @@ function recreateTable(tableName, columns) {
   const recreatedColumnPrevious = [];
 
   for (const columnName of Object.keys(columns)) {
+    const column = tables[tableName].columns[columnName] ?? EMPTY_OBJECT;
     const params = tables[tableName].params[columnName] ?? EMPTY_OBJECT;
+
+    if (fromId && column.type === "ID") {
+      continue;
+    }
 
     recreatedColumnCurrent.push(`"${columnName}"`);
 
     const previous = params.fillFrom ?? columnName;
 
     recreatedColumnPrevious.push(
-      params.coalesce
+      params.coalesce != null
         ? `COALESCE("${previous}", ${wrapValue(params.coalesce)})`
         : `"${previous}"`
     );
@@ -158,11 +163,15 @@ function addTableColumn(tableName, columnName, column, params) {
     tables[tableName].params[columnName] = params;
   }
 
-  const alterQuery = `ALTER TABLE "${tableName}" ADD COLUMN ${getColumnQueryPart(
-    columnName,
-    column
-  )};`;
-  addSql(alterQuery);
+  if (column.type === "ID" || column.primaryKey) {
+    recreateTable(tableName, null, true);
+  } else {
+    const alterQuery = `ALTER TABLE "${tableName}" ADD COLUMN ${getColumnQueryPart(
+      columnName,
+      column
+    )};`;
+    addSql(alterQuery);
+  }
 }
 
 function renameTableColumn(tableName, columnName, newColumnName) {
@@ -196,12 +205,6 @@ function getMigrationRevisionSqlSelectQuery() {
 }
 
 function getMigrationsSqlQueries(latestMigration) {
-  const queries = [];
-
-  queries.push({ query: "BEGIN TRANSACTION;" });
-
-  console.log(`Generating migration SQL queries...`);
-
   if (latestMigration.latest_revision != null) {
     console.log(
       `Last database migration: ${new Date(
@@ -214,6 +217,18 @@ function getMigrationsSqlQueries(latestMigration) {
     latestMigration.latest_revision = -1;
     console.log(`Migration history is empty`);
   }
+
+  if (
+    latestMigration.latest_revision != null &&
+    latestMigration.latest_revision === migrations.length - 1
+  ) {
+    console.log(`Database is up-to-date`);
+    return [];
+  }
+
+  const queries = [];
+
+  queries.push({ query: "BEGIN TRANSACTION;" });
 
   if (latestMigration.latest_revision < migrations.length) {
     console.log(`Target migration revision ID: ${migrations.length - 1}`);
