@@ -7,8 +7,8 @@ function createBaseMigration() {
   migrations = cfMigrations("dw_version");
   migrations.createMigration();
   migrations.createTable("species", {
-    id: { id: true },
-    name: { type: "TEXT", notNull: true },
+    id: { type: "ID" },
+    name: { type: "TEXT", notNull: true, default: "Unnamed species" },
     origin: { type: "TEXT" },
     population: { type: "INTEGER" },
   });
@@ -68,7 +68,7 @@ describe("Creating new table", function () {
     assert.strictEqual(queries[1].args.length, 3);
     assert.strictEqual(
       queries[2].query,
-      `CREATE TABLE "species" ("id" INTEGER PRIMARY KEY AUTOINCREMENT, "name" TEXT NOT NULL, "origin" TEXT, "population" INTEGER);`
+      `CREATE TABLE "species" ("id" INTEGER PRIMARY KEY AUTOINCREMENT, "name" TEXT NOT NULL DEFAULT 'Unnamed species', "origin" TEXT, "population" INTEGER);`
     );
     assert.strictEqual(queries[3].query, "COMMIT TRANSACTION;");
     assert.strictEqual(queries[4].query, "VACUUM;");
@@ -93,7 +93,7 @@ describe("Creating new column", function () {
     assert.strictEqual(queries[1].args.length, 3);
     assert.strictEqual(
       queries[2].query,
-      `CREATE TABLE "species" ("id" INTEGER PRIMARY KEY AUTOINCREMENT, "name" TEXT NOT NULL, "origin" TEXT, "population" INTEGER);`
+      `CREATE TABLE "species" ("id" INTEGER PRIMARY KEY AUTOINCREMENT, "name" TEXT NOT NULL DEFAULT 'Unnamed species', "origin" TEXT, "population" INTEGER);`
     );
     assert.strictEqual(
       queries[3].query,
@@ -137,7 +137,7 @@ describe("Changing existing column type", function () {
     assert.strictEqual(queries[1].args.length, 3);
     assert.strictEqual(
       queries[2].query,
-      `CREATE TABLE "species" ("id" INTEGER PRIMARY KEY AUTOINCREMENT, "name" TEXT NOT NULL, "origin" TEXT, "population" INTEGER);`
+      `CREATE TABLE "species" ("id" INTEGER PRIMARY KEY AUTOINCREMENT, "name" TEXT NOT NULL DEFAULT 'Unnamed species', "origin" TEXT, "population" INTEGER);`
     );
     assert.strictEqual(
       queries[3].query,
@@ -146,7 +146,7 @@ describe("Changing existing column type", function () {
     assert.strictEqual(queries[3].args.length, 3);
     assert.strictEqual(
       queries[4].query,
-      `CREATE TABLE "species_tmp" ("id" INTEGER, "name" TEXT, "origin" INTEGER NOT NULL DEFAULT 'Earth', "population" INTEGER);`
+      `CREATE TABLE "species_tmp" ("id" INTEGER PRIMARY KEY AUTOINCREMENT, "name" TEXT NOT NULL DEFAULT 'Unnamed species', "origin" INTEGER NOT NULL DEFAULT 'Earth', "population" INTEGER);`
     );
     assert.strictEqual(
       queries[5].query,
@@ -180,7 +180,7 @@ describe("Renaming existing column", function () {
     assert.strictEqual(queries[1].args.length, 3);
     assert.strictEqual(
       queries[2].query,
-      `CREATE TABLE "species" ("id" INTEGER PRIMARY KEY AUTOINCREMENT, "name" TEXT NOT NULL, "origin" TEXT, "population" INTEGER);`
+      `CREATE TABLE "species" ("id" INTEGER PRIMARY KEY AUTOINCREMENT, "name" TEXT NOT NULL DEFAULT 'Unnamed species', "origin" TEXT, "population" INTEGER);`
     );
     assert.strictEqual(
       queries[3].query,
@@ -220,7 +220,7 @@ describe("Add column with 'fillFrom' and 'coalesce' params", function () {
     assert.strictEqual(queries[1].args.length, 3);
     assert.strictEqual(
       queries[2].query,
-      `CREATE TABLE "species" ("id" INTEGER PRIMARY KEY AUTOINCREMENT, "name" TEXT NOT NULL, "origin" TEXT, "population" INTEGER);`
+      `CREATE TABLE "species" ("id" INTEGER PRIMARY KEY AUTOINCREMENT, "name" TEXT NOT NULL DEFAULT 'Unnamed species', "origin" TEXT, "population" INTEGER);`
     );
     assert.strictEqual(
       queries[3].query,
@@ -233,7 +233,7 @@ describe("Add column with 'fillFrom' and 'coalesce' params", function () {
     );
     assert.strictEqual(
       queries[5].query,
-      `CREATE TABLE "species_tmp" ("id" INTEGER, "name" TEXT, "origin" TEXT, "population" INTEGER, "residence" TEXT);`
+      `CREATE TABLE "species_tmp" ("id" INTEGER PRIMARY KEY AUTOINCREMENT, "name" TEXT NOT NULL DEFAULT 'Unnamed species', "origin" TEXT, "population" INTEGER, "residence" TEXT);`
     );
     assert.strictEqual(
       queries[6].query,
@@ -268,7 +268,7 @@ describe("Delete column from table", function () {
     assert.strictEqual(queries[1].args.length, 3);
     assert.strictEqual(
       queries[2].query,
-      `CREATE TABLE "species" ("id" INTEGER PRIMARY KEY AUTOINCREMENT, "name" TEXT NOT NULL, "origin" TEXT, "population" INTEGER);`
+      `CREATE TABLE "species" ("id" INTEGER PRIMARY KEY AUTOINCREMENT, "name" TEXT NOT NULL DEFAULT 'Unnamed species', "origin" TEXT, "population" INTEGER);`
     );
     assert.strictEqual(
       queries[3].query,
@@ -277,7 +277,7 @@ describe("Delete column from table", function () {
     assert.strictEqual(queries[3].args.length, 3);
     assert.strictEqual(
       queries[4].query,
-      `CREATE TABLE "species_tmp" ("id" INTEGER, "name" TEXT, "population" INTEGER);`
+      `CREATE TABLE "species_tmp" ("id" INTEGER PRIMARY KEY AUTOINCREMENT, "name" TEXT NOT NULL DEFAULT 'Unnamed species', "population" INTEGER);`
     );
     assert.strictEqual(
       queries[5].query,

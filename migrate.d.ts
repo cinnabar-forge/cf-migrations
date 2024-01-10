@@ -1,12 +1,11 @@
 declare module "@cinnabar-forge/cf-migrations" {
   export type Column = {
-    type?: "NULL" | "INTEGER" | "REAL" | "TEXT" | "BLOB";
-    id?: boolean;
+    type: "NULL" | "INTEGER" | "REAL" | "TEXT" | "BLOB" | "ID";
     primaryKey?: boolean;
     autoIncrement?: boolean;
     notNull?: boolean;
     unique?: boolean;
-    default?: string;
+    default?: any;
   };
   export type ColumnAdditionParams = {
     fillFrom?: string;
@@ -24,7 +23,7 @@ declare module "@cinnabar-forge/cf-migrations" {
     getSqlDialect: () => string;
     setSqlDialect: (value: string) => void;
     createMigration: () => void;
-    addSql: (query: string, params: any[]) => void;
+    addSql: (query: string, params?: any[]) => void;
     createTable: (name: string, columns: Record<string, Column>) => void;
     recreateTable: (name: string, columns?: Record<string, Column>) => void;
     removeTable: (name: string) => void;

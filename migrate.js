@@ -45,18 +45,26 @@ function addSql(query, args) {
 function getColumnQueryPart(columnName, column) {
   const columnQuery = [];
   columnQuery.push(`"${columnName}"`);
-  columnQuery.push(column.type.toUpperCase());
-  if (column.primaryKey) {
-    columnQuery.push("PRIMARY KEY");
-  }
-  if (column.autoIncrement) {
-    columnQuery.push("AUTOINCREMENT");
-  }
-  if (column.notNull) {
-    columnQuery.push("NOT NULL");
-  }
-  if (column.default != null) {
-    columnQuery.push(`DEFAULT ${wrapValue(column.default)}`);
+  if (column.type === "ID") {
+    columnQuery.push("INTEGER PRIMARY KEY AUTOINCREMENT");
+  } else {
+    columnQuery.push(column.type.toUpperCase());
+    if (column.primaryKey) {
+      columnQuery.push("PRIMARY KEY");
+    }
+    if (column.autoIncrement) {
+      columnQuery.push("AUTOINCREMENT");
+    }
+    if (column.notNull) {
+      columnQuery.push("NOT NULL");
+    }
+    if (column.default != null) {
+      columnQuery.push(`DEFAULT ${wrapValue(column.default)}`);
+    } else if (column.notNull) {
+      throw new Error(
+        "'notNull' argument should be used with 'default' argument"
+      );
+    }
   }
 
   return columnQuery.join(" ");
@@ -69,7 +77,7 @@ function getTableCreationSqlQuery(name, columns) {
   const uniques = [];
 
   for (const [columnName, column] of Object.entries(columns)) {
-    if (!column.id && column.primaryKey) {
+    if (column.type !== "ID" && column.primaryKey) {
       primaryKeys.push(`"${columnName}"`);
     }
 
@@ -97,20 +105,9 @@ function createTable(name, columns) {
   }
 
   tables[name] = {
-    columns: {},
-    primaryKeys: {},
+    columns: columns,
     params: {},
   };
-
-  for (const [columnName, column] of Object.entries(columns)) {
-    if (column.id) {
-      column.type = "INTEGER";
-      column.primaryKey = true;
-      column.autoIncrement = true;
-    }
-
-    tables[name].columns[columnName] = { type: column.type };
-  }
 
   addSql(getTableCreationSqlQuery(name, columns));
 }
@@ -234,7 +231,7 @@ function getMigrationsSqlQueries(latestMigration) {
   queries.push({ query: "COMMIT TRANSACTION;" });
   queries.push({ query: "VACUUM;" });
 
-  console.log(`...SQL queries have been generated`);
+  console.log(`...${queries.length} SQL query(ies) have been generated`);
 
   return queries;
 }
