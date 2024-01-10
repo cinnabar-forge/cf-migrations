@@ -92,6 +92,10 @@ function getTableCreationSqlQuery(name, columns) {
 }
 
 function createTable(name, columns) {
+  if (tables[name] != null) {
+    removeTable(name);
+  }
+
   tables[name] = {
     columns: {},
     primaryKeys: {},
