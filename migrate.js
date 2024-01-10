@@ -147,6 +147,10 @@ function recreateTable(tableName, columns) {
   addSql(`ALTER TABLE "${tempTableName}" RENAME TO "${tableName}";`);
 }
 
+function removeTable(tableName) {
+  addSql(`DROP TABLE "${tableName}";`);
+}
+
 function addTableColumn(tableName, columnName, column, params) {
   tables[tableName].columns[columnName] = column;
   if (params != null) {
@@ -245,6 +249,7 @@ export default function (_versionColumnName) {
     addSql,
     createTable,
     recreateTable,
+    removeTable,
     addTableColumn,
     renameTableColumn,
     changeTableColumn,

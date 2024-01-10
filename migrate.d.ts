@@ -27,6 +27,7 @@ declare module "@cinnabar-forge/cf-migrations" {
     addSql: (query: string, params: any[]) => void;
     createTable: (name: string, columns: Record<string, Column>) => void;
     recreateTable: (name: string, columns?: Record<string, Column>) => void;
+    removeTable: (name: string) => void;
     addTableColumn: (
       tableName: string,
       columnName: string,
