@@ -3,8 +3,8 @@
   "package": "@cinnabar-forge/cf-migrations",
   "name": "Cinnabar Forge Migrations",
   "major": 0,
-  "minor": 2,
-  "patch": 1,
-  "revision": 3,
-  "timestamp": 1704795917
+  "minor": 3,
+  "patch": 0,
+  "revision": 4,
+  "timestamp": 1704895886
 }
