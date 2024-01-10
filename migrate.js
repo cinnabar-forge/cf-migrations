@@ -27,7 +27,7 @@ function setSqlDialect(value) {
 function createMigration() {
   migrations.push([
     {
-      query: `INSERT INTO "migrations" (revision, ${versionColumnName}, date_migrated) VALUES (?, ?, ?);`,
+      query: `INSERT INTO "migrations" ("revision", "${versionColumnName}", "date_migrated") VALUES (?, ?, ?);`,
       args: [
         migrations.length,
         process.env.npm_package_version,
@@ -113,7 +113,6 @@ function createTable(name, columns) {
 
 function recreateTable(tableName, columns) {
   if (columns == null) {
-    console.log("hehe");
     columns = tables[tableName].columns;
   }
 
@@ -127,21 +126,21 @@ function recreateTable(tableName, columns) {
   for (const columnName of Object.keys(columns)) {
     const params = tables[tableName].params[columnName] ?? EMPTY_OBJECT;
 
-    recreatedColumnCurrent.push(columnName);
+    recreatedColumnCurrent.push(`"${columnName}"`);
 
     const previous = params.fillFrom ?? columnName;
 
     recreatedColumnPrevious.push(
       params.coalesce
         ? `COALESCE("${previous}", ${wrapValue(params.coalesce)})`
-        : previous
+        : `"${previous}"`
     );
   }
 
   addSql(
-    `INSERT INTO ${tempTableName} (${recreatedColumnCurrent.join(
+    `INSERT INTO "${tempTableName}" (${recreatedColumnCurrent.join(
       ", "
-    )}) SELECT ${recreatedColumnPrevious.join(", ")} FROM ${tableName};`
+    )}) SELECT ${recreatedColumnPrevious.join(", ")} FROM "${tableName}";`
   );
 
   addSql(`DROP TABLE "${tableName}";`);
@@ -170,8 +169,13 @@ function renameTableColumn(tableName, columnName, newColumnName) {
   addSql(query);
 }
 
-function changeTableColumn(tableName, columnName, column) {
-  tables[tableName].columns[columnName] = column;
+function changeTableColumn(tableName, columnName, column, params) {
+  if (column != null) {
+    tables[tableName].columns[columnName] = column;
+  }
+  if (params != null) {
+    tables[tableName].params[columnName] = params;
+  }
 }
 
 function deleteTableColumn(tableName, columnName) {

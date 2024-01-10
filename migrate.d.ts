@@ -41,7 +41,8 @@ declare module "@cinnabar-forge/cf-migrations" {
     changeTableColumn: (
       tableName: string,
       columnName: string,
-      column: Column
+      column?: Column,
+      params?: ColumnAdditionParams
     ) => void;
     deleteTableColumn: (tableName: string, columnName: string) => void;
     getMigrationTableSqlCreateQuery: () => string;

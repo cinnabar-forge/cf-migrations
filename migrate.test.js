@@ -46,7 +46,7 @@ describe("Adding SQL", function () {
     assert.strictEqual(queries[0].query, "BEGIN TRANSACTION;");
     assert.strictEqual(
       queries[1].query,
-      `INSERT INTO "migrations" (revision, test_version, date_migrated) VALUES (?, ?, ?);`
+      `INSERT INTO "migrations" ("revision", "test_version", "date_migrated") VALUES (?, ?, ?);`
     );
     assert.strictEqual(queries[2].query, "SELECT 15 AS testPurpose;");
     assert.strictEqual(queries[3].query, "COMMIT TRANSACTION;");
@@ -63,7 +63,7 @@ describe("Creating new table", function () {
     assert.strictEqual(queries[0].query, "BEGIN TRANSACTION;");
     assert.strictEqual(
       queries[1].query,
-      `INSERT INTO "migrations" (revision, dw_version, date_migrated) VALUES (?, ?, ?);`
+      `INSERT INTO "migrations" ("revision", "dw_version", "date_migrated") VALUES (?, ?, ?);`
     );
     assert.strictEqual(queries[1].args.length, 3);
     assert.strictEqual(
@@ -88,7 +88,7 @@ describe("Creating new column", function () {
     assert.strictEqual(queries[0].query, "BEGIN TRANSACTION;");
     assert.strictEqual(
       queries[1].query,
-      `INSERT INTO "migrations" (revision, dw_version, date_migrated) VALUES (?, ?, ?);`
+      `INSERT INTO "migrations" ("revision", "dw_version", "date_migrated") VALUES (?, ?, ?);`
     );
     assert.strictEqual(queries[1].args.length, 3);
     assert.strictEqual(
@@ -97,7 +97,7 @@ describe("Creating new column", function () {
     );
     assert.strictEqual(
       queries[3].query,
-      `INSERT INTO "migrations" (revision, dw_version, date_migrated) VALUES (?, ?, ?);`
+      `INSERT INTO "migrations" ("revision", "dw_version", "date_migrated") VALUES (?, ?, ?);`
     );
     assert.strictEqual(queries[3].args.length, 3);
     assert.strictEqual(
@@ -113,13 +113,18 @@ describe("Changing existing column type", function () {
   it("should create a table 'species'", function () {
     createBaseMigration();
   });
-  it("should change type of the column 'origin' from 'TEXT' to 'INTEGER', make it not-null, and default to 'Earth'", function () {
+  it("should change type of the column 'origin' from 'TEXT' to 'INTEGER', make it not-null, and default to 'Earth' and add param 'coalesce'", function () {
     migrations.createMigration();
-    migrations.changeTableColumn("species", "origin", {
-      type: "INTEGER",
-      notNull: true,
-      default: "Earth"
-    });
+    migrations.changeTableColumn(
+      "species",
+      "origin",
+      {
+        type: "INTEGER",
+        notNull: true,
+        default: "Earth",
+      },
+      { coalesce: 1 }
+    );
     migrations.recreateTable("species");
   });
   it("should return correct SQL query", function () {
@@ -127,7 +132,7 @@ describe("Changing existing column type", function () {
     assert.strictEqual(queries[0].query, "BEGIN TRANSACTION;");
     assert.strictEqual(
       queries[1].query,
-      `INSERT INTO "migrations" (revision, dw_version, date_migrated) VALUES (?, ?, ?);`
+      `INSERT INTO "migrations" ("revision", "dw_version", "date_migrated") VALUES (?, ?, ?);`
     );
     assert.strictEqual(queries[1].args.length, 3);
     assert.strictEqual(
@@ -136,7 +141,7 @@ describe("Changing existing column type", function () {
     );
     assert.strictEqual(
       queries[3].query,
-      `INSERT INTO "migrations" (revision, dw_version, date_migrated) VALUES (?, ?, ?);`
+      `INSERT INTO "migrations" ("revision", "dw_version", "date_migrated") VALUES (?, ?, ?);`
     );
     assert.strictEqual(queries[3].args.length, 3);
     assert.strictEqual(
@@ -145,7 +150,7 @@ describe("Changing existing column type", function () {
     );
     assert.strictEqual(
       queries[5].query,
-      `INSERT INTO species_tmp (id, name, origin, population) SELECT id, name, origin, population FROM species;`
+      `INSERT INTO "species_tmp" ("id", "name", "origin", "population") SELECT "id", "name", COALESCE("origin", 1), "population" FROM "species";`
     );
     assert.strictEqual(queries[6].query, `DROP TABLE "species";`);
     assert.strictEqual(
@@ -170,7 +175,7 @@ describe("Renaming existing column", function () {
     assert.strictEqual(queries[0].query, "BEGIN TRANSACTION;");
     assert.strictEqual(
       queries[1].query,
-      `INSERT INTO "migrations" (revision, dw_version, date_migrated) VALUES (?, ?, ?);`
+      `INSERT INTO "migrations" ("revision", "dw_version", "date_migrated") VALUES (?, ?, ?);`
     );
     assert.strictEqual(queries[1].args.length, 3);
     assert.strictEqual(
@@ -179,7 +184,7 @@ describe("Renaming existing column", function () {
     );
     assert.strictEqual(
       queries[3].query,
-      `INSERT INTO "migrations" (revision, dw_version, date_migrated) VALUES (?, ?, ?);`
+      `INSERT INTO "migrations" ("revision", "dw_version", "date_migrated") VALUES (?, ?, ?);`
     );
     assert.strictEqual(queries[3].args.length, 3);
     assert.strictEqual(
@@ -210,7 +215,7 @@ describe("Add column with 'fillFrom' and 'coalesce' params", function () {
     assert.strictEqual(queries[0].query, "BEGIN TRANSACTION;");
     assert.strictEqual(
       queries[1].query,
-      `INSERT INTO "migrations" (revision, dw_version, date_migrated) VALUES (?, ?, ?);`
+      `INSERT INTO "migrations" ("revision", "dw_version", "date_migrated") VALUES (?, ?, ?);`
     );
     assert.strictEqual(queries[1].args.length, 3);
     assert.strictEqual(
@@ -219,7 +224,7 @@ describe("Add column with 'fillFrom' and 'coalesce' params", function () {
     );
     assert.strictEqual(
       queries[3].query,
-      `INSERT INTO "migrations" (revision, dw_version, date_migrated) VALUES (?, ?, ?);`
+      `INSERT INTO "migrations" ("revision", "dw_version", "date_migrated") VALUES (?, ?, ?);`
     );
     assert.strictEqual(queries[3].args.length, 3);
     assert.strictEqual(
@@ -232,7 +237,7 @@ describe("Add column with 'fillFrom' and 'coalesce' params", function () {
     );
     assert.strictEqual(
       queries[6].query,
-      `INSERT INTO species_tmp (id, name, origin, population, residence) SELECT id, name, origin, population, COALESCE("origin", 'New Earth') FROM species;`
+      `INSERT INTO "species_tmp" ("id", "name", "origin", "population", "residence") SELECT "id", "name", "origin", "population", COALESCE("origin", 'New Earth') FROM "species";`
     );
     assert.strictEqual(queries[7].query, `DROP TABLE "species";`);
     assert.strictEqual(
@@ -258,7 +263,7 @@ describe("Delete column from table", function () {
     assert.strictEqual(queries[0].query, "BEGIN TRANSACTION;");
     assert.strictEqual(
       queries[1].query,
-      `INSERT INTO "migrations" (revision, dw_version, date_migrated) VALUES (?, ?, ?);`
+      `INSERT INTO "migrations" ("revision", "dw_version", "date_migrated") VALUES (?, ?, ?);`
     );
     assert.strictEqual(queries[1].args.length, 3);
     assert.strictEqual(
@@ -267,7 +272,7 @@ describe("Delete column from table", function () {
     );
     assert.strictEqual(
       queries[3].query,
-      `INSERT INTO "migrations" (revision, dw_version, date_migrated) VALUES (?, ?, ?);`
+      `INSERT INTO "migrations" ("revision", "dw_version", "date_migrated") VALUES (?, ?, ?);`
     );
     assert.strictEqual(queries[3].args.length, 3);
     assert.strictEqual(
@@ -276,7 +281,7 @@ describe("Delete column from table", function () {
     );
     assert.strictEqual(
       queries[5].query,
-      `INSERT INTO species_tmp (id, name, population) SELECT id, name, population FROM species;`
+      `INSERT INTO "species_tmp" ("id", "name", "population") SELECT "id", "name", "population" FROM "species";`
     );
     assert.strictEqual(queries[6].query, `DROP TABLE "species";`);
     assert.strictEqual(
