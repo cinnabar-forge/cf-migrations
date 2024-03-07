@@ -1,4 +1,4 @@
-declare module "@cinnabar-forge/cf-migrations" {
+declare module "migratta" {
   export type Column = {
     type: "NULL" | "INTEGER" | "REAL" | "TEXT" | "BLOB" | "ID";
     primaryKey?: boolean;
