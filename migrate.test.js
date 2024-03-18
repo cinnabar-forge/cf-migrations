@@ -73,6 +73,38 @@ describe("Creating new table", function () {
   });
 });
 
+describe("Creating two tables and link foreign key", function () {
+  it("should create a table 'species'", function () {
+    createBaseMigration();
+  });
+  it("should create a table 'people'", function () {
+    migrations.createTable("people", {
+      id: { type: "ID" },
+      name: { type: "TEXT", notNull: true, default: "Unnamed person" },
+      talisman: { type: "FOREIGN", table: "species" },
+    });
+  });
+  it("should return correct SQL query", function () {
+    const queries = migrations.getMigrationsSqlQueries({});
+    assert.strictEqual(queries[0].query, "BEGIN TRANSACTION;");
+    assert.strictEqual(
+      queries[1].query,
+      `INSERT INTO "migrations" ("revision", "dw_version", "date_migrated") VALUES (?, ?, ?);`
+    );
+    assert.strictEqual(queries[1].args.length, 3);
+    assert.strictEqual(
+      queries[2].query,
+      `CREATE TABLE "species" ("id" INTEGER PRIMARY KEY AUTOINCREMENT, "name" TEXT NOT NULL DEFAULT 'Unnamed species', "origin" TEXT, "population" INTEGER);`
+    );
+    assert.strictEqual(
+      queries[3].query,
+      `CREATE TABLE "people" ("id" INTEGER PRIMARY KEY AUTOINCREMENT, "name" TEXT NOT NULL DEFAULT 'Unnamed person', "talisman" INTEGER, FOREIGN KEY ("talisman") REFERENCES "species"("id"));`
+    );
+    assert.strictEqual(queries[4].query, "COMMIT TRANSACTION;");
+    assert.strictEqual(queries[5].query, "VACUUM;");
+  });
+});
+
 describe("Creating new column", function () {
   it("should create a table 'species'", function () {
     createBaseMigration();

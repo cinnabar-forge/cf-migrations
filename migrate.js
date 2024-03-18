@@ -47,6 +47,8 @@ function getColumnQueryPart(columnName, column) {
   columnQuery.push(`"${columnName}"`);
   if (column.type === "ID") {
     columnQuery.push("INTEGER PRIMARY KEY AUTOINCREMENT");
+  } else if (column.type === "FOREIGN") {
+    columnQuery.push("INTEGER");
   } else {
     columnQuery.push(column.type.toUpperCase());
     // if (column.primaryKey) {
@@ -75,6 +77,7 @@ function getTableCreationSqlQuery(name, columns) {
 
   const primaryKeys = [];
   const uniques = [];
+  const foreigns = [];
 
   for (const [columnName, column] of Object.entries(columns)) {
     if (column.type !== "ID" && column.primaryKey) {
@@ -83,6 +86,10 @@ function getTableCreationSqlQuery(name, columns) {
 
     if (column.unique) {
       uniques.push(`"${columnName}"`);
+    }
+
+    if (column.type === "FOREIGN" && column.table) {
+      foreigns.push({ column: columnName, table: column.table });
     }
 
     columnsQuery.push(getColumnQueryPart(columnName, column));
@@ -94,6 +101,14 @@ function getTableCreationSqlQuery(name, columns) {
 
   if (uniques.length > 0) {
     columnsQuery.push(`UNIQUE(${uniques.join(", ")})`);
+  }
+
+  if (foreigns.length > 0) {
+    for (const foreign of foreigns) {
+      columnsQuery.push(
+        `FOREIGN KEY ("${foreign.column}") REFERENCES "${foreign.table}"("id")`
+      );
+    }
   }
 
   return `CREATE TABLE "${name}" (${columnsQuery.join(", ")});`;
