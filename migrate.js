@@ -30,7 +30,7 @@ function createMigration() {
       query: `INSERT INTO "migrations" ("revision", "${versionColumnName}", "date_migrated") VALUES (?, ?, ?);`,
       args: [
         migrations.length,
-        process.env.npm_package_version,
+        process.env.npm_package_version || "-",
         Math.round(Date.now() / 1000),
       ],
     },
