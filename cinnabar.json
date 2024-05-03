@@ -1,0 +1,22 @@
+{
+  "cinnabarMetaVersion": 1,
+  "description": "Database migrations library",
+  "name": "Migratta",
+  "version": {
+    "dev": 0,
+    "major": 0,
+    "minor": 3,
+    "patch": 4,
+    "revision": 8,
+    "text": "0.3.4",
+    "timestamp": 1710798180
+  },
+  "stack": {
+    "nodejs": {
+      "outputFile": [
+        "cinnabar.js"
+      ],
+      "package": "migratta"
+    }
+  }
+}
