@@ -1,0 +1,12 @@
+# General
+**/.git
+**/.svn
+**/.hg
+
+# Node.js
+**/node_modules
+package-lock.json
+
+# Cinnabar Forge
+**/cinnabar.js
+cinnabar.json

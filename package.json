@@ -2,23 +2,37 @@
   "name": "migratta",
   "version": "0.3.4",
   "description": "Database migrations library",
+  "keywords": [
+    "sql",
+    "migration",
+    "database",
+    "sqlite"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/cinnabar-forge/migratta.git"
+  },
+  "license": "ISC",
   "author": {
     "name": "Timur Moziev",
     "email": "timur.moziev@gmail.com",
     "url": "https://timurrin.github.io"
   },
-  "main": "migrate.js",
-  "types": "migrate.d.ts",
+  "type": "module",
+  "main": "src/index.js",
+  "types": "src/index.d.ts",
   "files": [
-    "migrate.js",
-    "migrate.d.ts",
-    "version.json"
+    "src"
   ],
   "scripts": {
-    "test": "mocha migrate.test.js"
+    "format": "npx prettier . --write",
+    "lint": "npx eslint --fix .",
+    "test": "mocha",
+    "verify": "npm run lint && npm run format && npm test"
   },
   "devDependencies": {
-    "mocha": "^10.2.0"
-  },
-  "type": "module"
+    "@cinnabar-forge/eslint-plugin": "0.4.0",
+    "chai": "5.1.0",
+    "mocha": "10.4.0"
+  }
 }

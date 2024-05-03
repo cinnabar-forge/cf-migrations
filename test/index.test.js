@@ -1,5 +1,6 @@
-import cfMigrations from "./migrate.js";
 import assert from "assert";
+
+import cfMigrations from "../src/index.js";
 
 let migrations = cfMigrations();
 
@@ -8,7 +9,7 @@ function createBaseMigration() {
   migrations.createMigration();
   migrations.createTable("species", {
     id: { type: "ID" },
-    name: { type: "TEXT", notNull: true, default: "Unnamed species" },
+    name: { default: "Unnamed species", notNull: true, type: "TEXT" },
     origin: { type: "TEXT" },
     population: { type: "INTEGER" },
   });
@@ -80,8 +81,8 @@ describe("Creating two tables and link foreign key", function () {
   it("should create a table 'people'", function () {
     migrations.createTable("people", {
       id: { type: "ID" },
-      name: { type: "TEXT", notNull: true, default: "Unnamed person" },
-      talisman: { type: "FOREIGN", table: "species" },
+      name: { default: "Unnamed person", notNull: true, type: "TEXT" },
+      talisman: { table: "species", type: "FOREIGN" },
     });
   });
   it("should return correct SQL query", function () {
@@ -149,9 +150,9 @@ describe("Changing existing column type", function () {
       "species",
       "origin",
       {
-        type: "INTEGER",
-        notNull: true,
         default: "Earth",
+        notNull: true,
+        type: "INTEGER",
       },
       { coalesce: 1 }
     );
@@ -236,7 +237,7 @@ describe("Add column with 'fillFrom' and 'coalesce' params", function () {
       "species",
       "residence",
       { type: "TEXT" },
-      { fillFrom: "origin", coalesce: "New Earth" }
+      { coalesce: "New Earth", fillFrom: "origin" }
     );
     migrations.recreateTable("species");
   });
@@ -322,3 +323,9 @@ describe("Delete column from table", function () {
     assert.strictEqual(queries[9].query, "VACUUM;");
   });
 });
+
+describe("Generate Typescript file", function () {
+
+  // getTypescriptTypesFile()
+})
+  

@@ -47,6 +47,7 @@ declare module "migratta" {
     getMigrationTableSqlCreateQuery: () => string;
     getMigrationRevisionSqlSelectQuery: () => string;
     getMigrationsSqlQueries: (latestMigration: LastMigration) => Query[];
+    getTypescriptTypesFile: () => string;
   };
 
   export default function (_versionColumnName?: string): MigrationBuilder;

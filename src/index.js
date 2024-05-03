@@ -27,19 +27,19 @@ function setSqlDialect(value) {
 function createMigration() {
   migrations.push([
     {
-      query: `INSERT INTO "migrations" ("revision", "${versionColumnName}", "date_migrated") VALUES (?, ?, ?);`,
       args: [
         migrations.length,
         process.env.npm_package_version || "-",
         Math.round(Date.now() / 1000),
       ],
+      query: `INSERT INTO "migrations" ("revision", "${versionColumnName}", "date_migrated") VALUES (?, ?, ?);`,
     },
   ]);
 }
 
 function addSql(query, args) {
   const currentMigration = migrations[migrations.length - 1];
-  currentMigration.push({ query, args });
+  currentMigration.push({ args, query });
 }
 
 function getColumnQueryPart(columnName, column) {
@@ -266,6 +266,36 @@ function getMigrationsSqlQueries(latestMigration) {
   return queries;
 }
 
+function getTypescriptTypesFile() {
+  let typescriptFileContents = '';
+
+  for (const [tableName, table] of Object.entries(tables)) {
+    typescriptFileContents += `interface ${tableName} {\n`;
+
+    for (const [columnName, column] of Object.entries(table.columns)) {
+      let type;
+      switch (column.type) {
+        case 'ID':
+        case 'INTEGER':
+        case 'FOREIGN':
+          type = 'number';
+          break;
+        case 'TEXT':
+          type = 'string';
+          break;
+        default:
+          type = 'unknown';
+      }
+
+      typescriptFileContents += `  ${columnName}: ${type};\n`;
+    }
+
+    typescriptFileContents += '}\n\n';
+  }
+
+  return typescriptFileContents;
+}
+
 function wrapValue(value) {
   return typeof value === "string" ? `'${value}'` : value;
 }
@@ -274,19 +304,20 @@ export default function (_versionColumnName) {
   resetContext();
   versionColumnName = _versionColumnName ?? "app_version";
   return {
-    getSqlDialect,
-    setSqlDialect,
-    createMigration,
     addSql,
+    addTableColumn,
+    changeTableColumn,
+    createMigration,
     createTable,
+    deleteTableColumn,
+    getMigrationRevisionSqlSelectQuery,
+    getMigrationTableSqlCreateQuery,
+    getMigrationsSqlQueries,
+    getSqlDialect,
+    getTypescriptTypesFile,
     recreateTable,
     removeTable,
-    addTableColumn,
     renameTableColumn,
-    changeTableColumn,
-    deleteTableColumn,
-    getMigrationTableSqlCreateQuery,
-    getMigrationRevisionSqlSelectQuery,
-    getMigrationsSqlQueries,
+    setSqlDialect,
   };
 }
