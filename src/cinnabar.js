@@ -7,15 +7,16 @@ export default {
   "version": {
     "dev": 0,
     "major": 0,
-    "minor": 3,
-    "patch": 4,
-    "revision": 8,
-    "text": "0.3.4",
-    "timestamp": 1710798180
+    "minor": 4,
+    "patch": 0,
+    "revision": 9,
+    "text": "0.4.0",
+    "timestamp": 1715070124
   },
   "stack": {
     "nodejs": {
       "outputFile": [
+        "src",
         "cinnabar.js"
       ],
       "package": "migratta"
