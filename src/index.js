@@ -270,7 +270,8 @@ function getTypescriptTypesFile() {
   let typescriptFileContents = '';
 
   for (const [tableName, table] of Object.entries(tables)) {
-    typescriptFileContents += `interface ${tableName} {\n`;
+    const className = `${tableName.charAt(0).toUpperCase() + tableName.slice(1)}TableItem`
+    typescriptFileContents += `export class ${className} {\n`;
 
     for (const [columnName, column] of Object.entries(table.columns)) {
       let type;
@@ -292,6 +293,8 @@ function getTypescriptTypesFile() {
 
     typescriptFileContents += '}\n\n';
   }
+
+  typescriptFileContents += '// EOF\n'
 
   return typescriptFileContents;
 }
