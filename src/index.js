@@ -169,6 +169,7 @@ function recreateTable(tableName, columns, fromId) {
 }
 
 function removeTable(tableName) {
+  delete tables[tableName];
   addSql(`DROP TABLE "${tableName}";`);
 }
 
@@ -274,6 +275,7 @@ function getTypescriptTypesFile() {
     typescriptFileContents += `export class ${className} {\n`;
 
     for (const [columnName, column] of Object.entries(table.columns)) {
+      let notNull = (!column.notNull && column.type !== "ID") ? '?' : '';
       let type;
       switch (column.type) {
         case 'ID':
@@ -288,7 +290,7 @@ function getTypescriptTypesFile() {
           type = 'unknown';
       }
 
-      typescriptFileContents += `  ${columnName}: ${type};\n`;
+      typescriptFileContents += `  ${columnName}${notNull}: ${type};\n`;
     }
 
     typescriptFileContents += '}\n\n';
