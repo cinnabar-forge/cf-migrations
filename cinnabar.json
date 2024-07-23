@@ -3,13 +3,12 @@
   "description": "Database migrations library",
   "name": "Migratta",
   "version": {
-    "dev": 0,
     "major": 0,
     "minor": 4,
-    "patch": 0,
-    "revision": 9,
-    "text": "0.4.0",
-    "timestamp": 1715070124
+    "patch": 1,
+    "revision": 10,
+    "text": "0.4.1",
+    "timestamp": 1721761630
   },
   "stack": {
     "nodejs": {
