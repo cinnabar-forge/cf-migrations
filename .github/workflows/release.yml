@@ -1,0 +1,28 @@
+name: Release
+
+on:
+  release:
+    types: [created]
+
+jobs:
+  publish-npm:
+    runs-on: ubuntu-latest
+    env:
+      ANCA_CI: true
+    name: "Publish package to npm registry"
+    steps:
+      - uses: actions/checkout@v4
+        name: "Checkout repo"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.13.0
+          registry-url: https://registry.npmjs.org/
+        name: "Install Node.js"
+      - run: npm ci
+        name: "Install dependencies"
+      - run: npm test
+        name: "Run tests"
+      - run: npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{secrets.npm_token}}
+        name: "Build distribution bundle and publish to registry"

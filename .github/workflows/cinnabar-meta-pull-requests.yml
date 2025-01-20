@@ -1,0 +1,23 @@
+name: Cinnabar Meta Pull Request Check
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+
+jobs:
+  check-file-exists:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ github.head_ref }}
+      - name: Check if update.cinnabarmeta exists
+        id: check-file
+        run: |
+          if [ -f "update.cinnabarmeta" ]; then
+            echo "File exists, proceeding..."
+          else
+            echo "File does not exist, failing the action..."
+            exit 1
+          fi

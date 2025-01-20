@@ -5,10 +5,12 @@ declare module "migratta" {
     autoIncrement?: boolean;
     notNull?: boolean;
     unique?: boolean;
+    // biome-ignore lint/suspicious/noExplicitAny: <explanation>
     default?: any;
   };
   export type ColumnAdditionParams = {
     fillFrom?: string;
+    // biome-ignore lint/suspicious/noExplicitAny: <explanation>
     coalesce?: any;
   };
   export type LastMigration = {
@@ -16,12 +18,14 @@ declare module "migratta" {
     app_version: string;
     date_migrated: number;
   };
+  // biome-ignore lint/suspicious/noExplicitAny: <explanation>
   export type Query = { query: string; args: any[] };
   export type MigrationBuilder = {
     resetContext: () => void;
     getSqlDialect: () => string;
     setSqlDialect: (value: string) => void;
     createMigration: () => void;
+    // biome-ignore lint/suspicious/noExplicitAny: <explanation>
     addSql: (query: string, params?: any[]) => void;
     createTable: (name: string, columns: Record<string, Column>) => void;
     recreateTable: (name: string, columns?: Record<string, Column>) => void;
@@ -30,18 +34,18 @@ declare module "migratta" {
       tableName: string,
       columnName: string,
       column: Column,
-      params?: ColumnAdditionParams
+      params?: ColumnAdditionParams,
     ) => void;
     renameTableColumn: (
       tableName: string,
       columnName: string,
-      newColumnName: string
+      newColumnName: string,
     ) => void;
     changeTableColumn: (
       tableName: string,
       columnName: string,
       column?: Column,
-      params?: ColumnAdditionParams
+      params?: ColumnAdditionParams,
     ) => void;
     deleteTableColumn: (tableName: string, columnName: string) => void;
     getMigrationTableSqlCreateQuery: () => string;

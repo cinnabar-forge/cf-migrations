@@ -8,31 +8,35 @@
     "database",
     "sqlite"
   ],
+  "license": "ISC",
+  "contributors": [
+    {
+      "name": "Timur Moziev",
+      "email": "timur.moziev@gmail.com",
+      "url": "https://timurrin.github.io/"
+    }
+  ],
+  "files": [
+    "src"
+  ],
+  "type": "module",
+  "main": "src/index.js",
+  "types": "src/index.d.ts",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/cinnabar-forge/migratta.git"
   },
-  "license": "ISC",
-  "author": {
-    "name": "Timur Moziev",
-    "email": "timur.moziev@gmail.com",
-    "url": "https://timurrin.github.io"
-  },
-  "type": "module",
-  "main": "src/index.js",
-  "types": "src/index.d.ts",
-  "files": [
-    "src"
-  ],
   "scripts": {
-    "format": "npx prettier . --write",
-    "lint": "npx eslint --fix .",
-    "test": "mocha",
-    "verify": "npm run lint && npm run format && npm test"
+    "check": "biome check ./src",
+    "fix": "biome check --fix --unsafe ./src",
+    "test": "npm run check && mocha './test'"
   },
   "devDependencies": {
     "@biomejs/biome": "1.9.4",
     "chai": "5.1.0",
     "mocha": "10.4.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
   }
 }

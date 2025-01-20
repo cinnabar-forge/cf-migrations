@@ -1,4 +1,13 @@
 {
+  "authors": [
+    {
+      "name": "Timur Moziev",
+      "github": "TimurRin",
+      "email": "timur.moziev@gmail.com",
+      "type": "maintainer",
+      "url": "https://timurrin.github.io/"
+    }
+  ],
   "cinnabarMeta": {
     "dataVersion": 0,
     "version": {

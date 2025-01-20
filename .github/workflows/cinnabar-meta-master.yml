@@ -1,0 +1,75 @@
+name: Cinnabar Meta Version Updater
+
+on:
+  push:
+    branches:
+      - master
+      - release/*
+    paths:
+      - update.cinnabarmeta
+
+permissions:
+  pull-requests: read
+
+jobs:
+  run-cinnabar-meta:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.CINNABAR_META_PAT }}
+          fetch-depth: 0
+          fetch-tags: true
+          submodules: recursive
+      - name: Collect pull requests
+        id: collect-prs
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const { execSync } = require('child_process');
+            const latestTag = execSync('git tag --sort=-creatordate | head -n 1').toString().trim();
+            console.log(`Latest tag: ${latestTag}`);
+            const tagCommitDate = execSync(`git log -1 --format=%ai ${latestTag}`).toString().trim();
+            console.log(`Latest tag commit date: ${tagCommitDate}`);
+            const { data: pulls } = await github.rest.pulls.list({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'closed',
+              base: 'master',
+              sort: 'updated',
+              direction: 'desc',
+            });
+            const filteredPRs = pulls.filter(pr => {
+              return pr.merged_at && new Date(pr.merged_at) > new Date(tagCommitDate);
+            });
+            const prList = filteredPRs.map(pr => `- ${pr.title} (#${pr.number})`).join('\n');
+            const fs = require('fs');
+            fs.writeFileSync('.cinnabar-meta-pull-requests.md', prList);
+            console.log(`Collected PRs:\n${prList}`);
+      - name: Install Cinnabar Meta
+        run: npm i -g @cinnabar-forge/meta
+      - name: Set up Git user
+        run: |
+          git config --global user.name ${{ vars.TECHNICAL_USER_NAME }}
+          git config --global user.email ${{ vars.TECHNICAL_USER_EMAIL }}
+      - name: Run cinnabar-meta command
+        run: cinnabar-meta --file
+      - name: Push changes and tags
+        run: |
+          git push origin --atomic HEAD:master --tags
+      - name: Read version from ./tmp/version
+        id: read-version
+        run: |
+          VERSION=$(cat ./tmp/version)
+          echo "::set-output name=version::$VERSION"
+      - name: Create release
+        uses: actions/create-release@v1
+        with:
+          tag_name: v${{ steps.read-version.outputs.version }}
+          release_name: v${{ steps.read-version.outputs.version }}
+          body_path: ./tmp/CHANGELOG-latest.md
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.CINNABAR_META_PAT }}
