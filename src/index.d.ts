@@ -54,5 +54,5 @@ declare module "migratta" {
     getTypescriptTypesFile: () => string;
   };
 
-  export default function (_versionColumnName?: string): MigrationBuilder;
+  export default function (appVersion: string): MigrationBuilder;
 }

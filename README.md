@@ -16,30 +16,24 @@ npm install migratta
 
 ### Usage
 
-Example (using [Cinnabar Forge SQLite Wrapper](https://github.com/cinnabar-forge/cf-sqlite3)):
-
-```bash
-npm install @cinnabar-forge/cf-sqlite3
-```
-
 ```javascript
-import fs from "fs";
-import cfSqlite3 from "@cinnabar-forge/cf-sqlite3";
+import fs from "node:fs";
+import Database from "better-sqlite3";
 import cfMigrations from "migratta";
 
 // Init sqlite3 database
-const db = cfSqlite3("./default.sqlite");
+const db = new Database("./default.sqlite");
 
 // Init migrations object
-const migrations = cfMigrations();
+const migrations = cfMigrations("0.1.0");
 
 // Init migrations DB 'migrations' table
-await db.exec(migrations.getMigrationTableSqlCreateQuery());
+db.exec(migrations.getMigrationTableSqlCreateQuery());
 
 // Get latest migration revision
-const latestRevision = await db.get(
-  migrations.getMigrationRevisionSqlSelectQuery()
-);
+const latestRevision = db
+  .prepare(migrations.getMigrationRevisionSqlSelectQuery())
+  .get();
 
 // Initial migration (migration 0)
 migrations.createMigration();
@@ -74,7 +68,11 @@ fs.writeFileSync("./types.ts", migrations.getTypescriptTypesFile());
 const queries = migrations.getMigrationsSqlQueries(latestRevision);
 console.log(queries);
 for (const query of queries) {
-  await db.run(query.query, query.args);
+  if (query.args) {
+    db.prepare(query.query).run(...query.args);
+  } else {
+    db.exec(query.query);
+  }
 }
 ```
 

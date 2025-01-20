@@ -5,7 +5,7 @@ import cfMigrations from "../src/index.js";
 let migrations = cfMigrations();
 
 function createBaseMigration() {
-  migrations = cfMigrations("dw_version");
+  migrations = cfMigrations("0.1.0");
   migrations.createMigration();
   migrations.createTable("species", {
     id: { type: "ID" },
@@ -36,7 +36,7 @@ describe("Static functions", function () {
 
 describe("Adding SQL", function () {
   it("should add a SQL query", function () {
-    migrations = cfMigrations("test_version");
+    migrations = cfMigrations("0.1.0");
     migrations.createMigration();
     migrations.addSql("SELECT 15 AS testPurpose;");
   });
@@ -45,7 +45,7 @@ describe("Adding SQL", function () {
     assert.strictEqual(queries[0].query, "BEGIN TRANSACTION;");
     assert.strictEqual(
       queries[1].query,
-      `INSERT INTO "migrations" ("revision", "test_version", "date_migrated") VALUES (?, ?, ?);`
+      `INSERT INTO "migrations" ("revision", "app_version", "date_migrated") VALUES (?, ?, ?);`
     );
     assert.strictEqual(queries[2].query, "SELECT 15 AS testPurpose;");
     assert.strictEqual(queries[3].query, "COMMIT TRANSACTION;");
@@ -62,7 +62,7 @@ describe("Creating new table", function () {
     assert.strictEqual(queries[0].query, "BEGIN TRANSACTION;");
     assert.strictEqual(
       queries[1].query,
-      `INSERT INTO "migrations" ("revision", "dw_version", "date_migrated") VALUES (?, ?, ?);`
+      `INSERT INTO "migrations" ("revision", "app_version", "date_migrated") VALUES (?, ?, ?);`
     );
     assert.strictEqual(queries[1].args.length, 3);
     assert.strictEqual(
@@ -90,7 +90,7 @@ describe("Creating two tables and link foreign key", function () {
     assert.strictEqual(queries[0].query, "BEGIN TRANSACTION;");
     assert.strictEqual(
       queries[1].query,
-      `INSERT INTO "migrations" ("revision", "dw_version", "date_migrated") VALUES (?, ?, ?);`
+      `INSERT INTO "migrations" ("revision", "app_version", "date_migrated") VALUES (?, ?, ?);`
     );
     assert.strictEqual(queries[1].args.length, 3);
     assert.strictEqual(
@@ -119,7 +119,7 @@ describe("Creating new column", function () {
     assert.strictEqual(queries[0].query, "BEGIN TRANSACTION;");
     assert.strictEqual(
       queries[1].query,
-      `INSERT INTO "migrations" ("revision", "dw_version", "date_migrated") VALUES (?, ?, ?);`
+      `INSERT INTO "migrations" ("revision", "app_version", "date_migrated") VALUES (?, ?, ?);`
     );
     assert.strictEqual(queries[1].args.length, 3);
     assert.strictEqual(
@@ -128,7 +128,7 @@ describe("Creating new column", function () {
     );
     assert.strictEqual(
       queries[3].query,
-      `INSERT INTO "migrations" ("revision", "dw_version", "date_migrated") VALUES (?, ?, ?);`
+      `INSERT INTO "migrations" ("revision", "app_version", "date_migrated") VALUES (?, ?, ?);`
     );
     assert.strictEqual(queries[3].args.length, 3);
     assert.strictEqual(
@@ -163,7 +163,7 @@ describe("Changing existing column type", function () {
     assert.strictEqual(queries[0].query, "BEGIN TRANSACTION;");
     assert.strictEqual(
       queries[1].query,
-      `INSERT INTO "migrations" ("revision", "dw_version", "date_migrated") VALUES (?, ?, ?);`
+      `INSERT INTO "migrations" ("revision", "app_version", "date_migrated") VALUES (?, ?, ?);`
     );
     assert.strictEqual(queries[1].args.length, 3);
     assert.strictEqual(
@@ -172,7 +172,7 @@ describe("Changing existing column type", function () {
     );
     assert.strictEqual(
       queries[3].query,
-      `INSERT INTO "migrations" ("revision", "dw_version", "date_migrated") VALUES (?, ?, ?);`
+      `INSERT INTO "migrations" ("revision", "app_version", "date_migrated") VALUES (?, ?, ?);`
     );
     assert.strictEqual(queries[3].args.length, 3);
     assert.strictEqual(
@@ -206,7 +206,7 @@ describe("Renaming existing column", function () {
     assert.strictEqual(queries[0].query, "BEGIN TRANSACTION;");
     assert.strictEqual(
       queries[1].query,
-      `INSERT INTO "migrations" ("revision", "dw_version", "date_migrated") VALUES (?, ?, ?);`
+      `INSERT INTO "migrations" ("revision", "app_version", "date_migrated") VALUES (?, ?, ?);`
     );
     assert.strictEqual(queries[1].args.length, 3);
     assert.strictEqual(
@@ -215,7 +215,7 @@ describe("Renaming existing column", function () {
     );
     assert.strictEqual(
       queries[3].query,
-      `INSERT INTO "migrations" ("revision", "dw_version", "date_migrated") VALUES (?, ?, ?);`
+      `INSERT INTO "migrations" ("revision", "app_version", "date_migrated") VALUES (?, ?, ?);`
     );
     assert.strictEqual(queries[3].args.length, 3);
     assert.strictEqual(
@@ -246,7 +246,7 @@ describe("Add column with 'fillFrom' and 'coalesce' params", function () {
     assert.strictEqual(queries[0].query, "BEGIN TRANSACTION;");
     assert.strictEqual(
       queries[1].query,
-      `INSERT INTO "migrations" ("revision", "dw_version", "date_migrated") VALUES (?, ?, ?);`
+      `INSERT INTO "migrations" ("revision", "app_version", "date_migrated") VALUES (?, ?, ?);`
     );
     assert.strictEqual(queries[1].args.length, 3);
     assert.strictEqual(
@@ -255,7 +255,7 @@ describe("Add column with 'fillFrom' and 'coalesce' params", function () {
     );
     assert.strictEqual(
       queries[3].query,
-      `INSERT INTO "migrations" ("revision", "dw_version", "date_migrated") VALUES (?, ?, ?);`
+      `INSERT INTO "migrations" ("revision", "app_version", "date_migrated") VALUES (?, ?, ?);`
     );
     assert.strictEqual(queries[3].args.length, 3);
     assert.strictEqual(
@@ -294,7 +294,7 @@ describe("Delete column from table", function () {
     assert.strictEqual(queries[0].query, "BEGIN TRANSACTION;");
     assert.strictEqual(
       queries[1].query,
-      `INSERT INTO "migrations" ("revision", "dw_version", "date_migrated") VALUES (?, ?, ?);`
+      `INSERT INTO "migrations" ("revision", "app_version", "date_migrated") VALUES (?, ?, ?);`
     );
     assert.strictEqual(queries[1].args.length, 3);
     assert.strictEqual(
@@ -303,7 +303,7 @@ describe("Delete column from table", function () {
     );
     assert.strictEqual(
       queries[3].query,
-      `INSERT INTO "migrations" ("revision", "dw_version", "date_migrated") VALUES (?, ?, ?);`
+      `INSERT INTO "migrations" ("revision", "app_version", "date_migrated") VALUES (?, ?, ?);`
     );
     assert.strictEqual(queries[3].args.length, 3);
     assert.strictEqual(

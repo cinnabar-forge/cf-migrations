@@ -1,6 +1,6 @@
 let dialect;
 
-let versionColumnName;
+let _appVersion;
 
 const EMPTY_OBJECT = {};
 
@@ -24,11 +24,15 @@ function setSqlDialect(value) {
   dialect = value;
 }
 
-function createMigration(version) {
+function createMigration() {
   migrations.push([
     {
-      args: [migrations.length, version || "-", Math.round(Date.now() / 1000)],
-      query: `INSERT INTO "migrations" ("revision", "${versionColumnName}", "date_migrated") VALUES (?, ?, ?);`,
+      args: [
+        migrations.length,
+        _appVersion || "-",
+        Math.round(Date.now() / 1000),
+      ],
+      query: `INSERT INTO "migrations" ("revision", "app_version", "date_migrated") VALUES (?, ?, ?);`,
     },
   ]);
 }
@@ -210,11 +214,11 @@ function deleteTableColumn(tableName, columnName) {
 }
 
 function getMigrationTableSqlCreateQuery() {
-  return `CREATE TABLE IF NOT EXISTS "migrations" ("revision" INTEGER NOT NULL PRIMARY KEY, "${versionColumnName}" TEXT NOT NULL, "date_migrated" INTEGER NOT NULL);`;
+  return `CREATE TABLE IF NOT EXISTS "migrations" ("revision" INTEGER NOT NULL PRIMARY KEY, "app_version" TEXT NOT NULL, "date_migrated" INTEGER NOT NULL);`;
 }
 
 function getMigrationRevisionSqlSelectQuery() {
-  return `SELECT MAX(revision) as "latest_revision", "${versionColumnName}", "date_migrated" FROM "migrations";`;
+  return `SELECT MAX(revision) as "latest_revision", "app_version", "date_migrated" FROM "migrations";`;
 }
 
 function getMigrationsSqlQueries(latestMigration) {
@@ -223,7 +227,7 @@ function getMigrationsSqlQueries(latestMigration) {
       `Last database migration: ${new Date(
         latestMigration.date_migrated * 1000,
       ).toISOString()} (r${latestMigration.latest_revision}, v${
-        latestMigration[versionColumnName]
+        latestMigration.app_version
       })`,
     );
   } else {
@@ -302,9 +306,9 @@ function wrapValue(value) {
   return typeof value === "string" ? `'${value}'` : value;
 }
 
-export default function (_versionColumnName) {
+export default function (appVersion) {
+  _appVersion = appVersion;
   resetContext();
-  versionColumnName = _versionColumnName ?? "app_version";
   return {
     addSql,
     addTableColumn,
