@@ -1,0 +1,39 @@
+{
+  "cinnabarMeta": {
+    "dataVersion": 0,
+    "version": {
+      "latest": "0.4.1",
+      "timestamp": 1721761630
+    },
+    "files": [
+      {
+        "path": "./package.json",
+        "type": "nodejs-package-json"
+      },
+      {
+        "path": "./package-lock.json",
+        "type": "nodejs-package-lock-json"
+      },
+      {
+        "path": "./src/cinnabar.js",
+        "type": "javascript",
+        "updateBuild": true
+      }
+    ],
+    "repo": {
+      "type": "github",
+      "value": "cinnabar-forge/migratta"
+    },
+    "updateChangelog": true
+  },
+  "development": {
+    "readme": {}
+  },
+  "namings": {
+    "text": "Migratta",
+    "npmPackage": "migratta"
+  },
+  "public": true,
+  "type": "library",
+  "stack": "nodejs"
+}
